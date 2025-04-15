@@ -77,7 +77,7 @@ export default function TestimonialSection() {
   }
 
   return (
-    <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-r from-blue-600 to-indigo-600 overflow-hidden">
+    <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-r from-[#D43F56] to-[#A51C30] overflow-hidden">
       <div className="container px-2 md:px-6">
         <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center mb-12 text-white">
           What Our Users Say
@@ -101,7 +101,7 @@ export default function TestimonialSection() {
                   key={`${testimonial.id}-${index}`}
                   className="flex-shrink-0 w-[300px]"
                 >
-                  <Card className="border-none shadow-xl bg-gradient-to-br from-blue-400/90 to-indigo-500/90 backdrop-blur-sm text-white h-[400px] transform transition-transform duration-300 hover:scale-105">
+                  <Card className="border-none shadow-xl bg-gradient-to-br from-[#A51C30] to-[#D43F56] backdrop-blur-sm text-white h-[400px] transform transition-transform duration-300 hover:scale-105">
                     <CardContent className="p-6 flex flex-col justify-between h-full">
                       <div className="flex flex-col items-center text-center space-y-4">
                         <svg className="w-10 h-10 text-blue-200 mb-2" fill="currentColor" viewBox="0 0 32 32" aria-hidden="true">
