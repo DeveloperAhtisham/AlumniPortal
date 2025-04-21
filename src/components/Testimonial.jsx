@@ -77,7 +77,14 @@ export default function TestimonialSection() {
   }
 
   return (
-    <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-r from-[#D43F56] to-[#A51C30] overflow-hidden">
+    <section style={{
+      backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(/image/tetimonial.jpg)`,
+      backgroundSize: "cover",
+      backgroundPosition: "top",
+      backgroundRepeat: "no-repeat",
+      backgroundBlendMode: "multiply"
+    }}
+     className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-r from-[#D43F56] to-[#A51C30] overflow-hidden">
       <div className="container px-2 md:px-6">
         <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center mb-12 text-white">
           What Our Users Say

@@ -14,6 +14,7 @@ import Navbar2 from "@/components/header/Navbar2"
 import AlumniLoading from '@/components/AlumniLoading'
 import { useRouter } from 'next/navigation'
 import { useToast } from "@/hooks/use-toast"
+import { isAuthenticated } from "@/services/checkAuth"
 
 export default function UserConnectionPage() {
   const { toast } = useToast()
@@ -25,7 +26,12 @@ export default function UserConnectionPage() {
   const [activeTab, setActiveTab] = useState("all")
   const [loading, setLoading] = useState(false)
   const [noAlumni, setNoAlumni] = useState(false)
-
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      console.log("User not authenticated, redirecting to login");
+      router.replace("/login");
+    }
+  }, [router]);
   // Dummy data for alumni
   const [users, setUsers] = useState([
     {

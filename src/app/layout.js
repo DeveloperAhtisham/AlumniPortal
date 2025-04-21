@@ -1,13 +1,10 @@
-// Use client-side logic after this
 'use client';
 
-import { Provider } from 'react-redux'; 
-import { store } from '../redux/store'; 
 import { metadata } from './metadata';
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
-import ReduxProvider from '@/redux/ReduxProvider';
+import ReduxProvider from '@/redux/ReduxProvider'; // Your custom wrapper
 
 const inter = Inter({ subsets: ["latin"] });
 

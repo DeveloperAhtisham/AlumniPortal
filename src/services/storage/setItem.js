@@ -1,18 +1,19 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
 export const setItem = async (key, value) => {
+    if (typeof window === "undefined") return false; // Ensure it's running in the browser
+  
     if (value === null) {
-        throw new Error('invalid-value');
+      throw new Error('invalid-value');
     }
-
+  
     if (key === null) {
-        throw new Error('invalid-key');
+      throw new Error('invalid-key');
     }
-
+  
     try {
-        await AsyncStorage.setItem(key, JSON.stringify(value));
-        return true;
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
     } catch (error) {
-        throw new Error('There was an error on the native side');
+      throw new Error('There was an error storing data in localStorage');
     }
-};
+  };
+  

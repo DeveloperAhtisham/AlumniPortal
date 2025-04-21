@@ -1,7 +1,7 @@
 import axios from "axios";
 import { clear } from "./storage/clear";
 import { setItem } from "./storage/setItem";
-import { baseURL } from "../config/apiConfig";
+import { baseURL } from "./config/apiConfig";
 import { resetAllReducers, store } from "../redux/store";
 
 export const parseJWT = (token) => {

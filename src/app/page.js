@@ -127,7 +127,13 @@ export default function Component() {
     {userData ? (<Navbar2></Navbar2>):( <NavForSlash />)}
    
       <main className="container mx-auto flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-r from-[#A51C30] to-[#D43F56] text-white">
+        <section style={{
+            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(/image/default_bg.jpeg)`,
+            backgroundSize: "cover",
+            backgroundPosition: 'top',
+            backgroundRepeat: "no-repeat",
+            backgroundBlendMode: "multiply"
+          }} className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-r from-[#A51C30] to-[#D43F56] text-white">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center space-y-4 text-center">
               <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl/none">
