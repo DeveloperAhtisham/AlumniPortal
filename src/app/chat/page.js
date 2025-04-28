@@ -13,71 +13,26 @@ import Navbar2 from '@/components/header/Navbar2';
 import ChatLoading from '@/components/ChatLoading';
 import { useRouter } from 'next/navigation';
 import { isAuthenticated } from '@/services/checkAuth';
+import { sendMessage } from '@/features/chat/chatSlice';
 
 
-// Dummy chat data
-const dummyChats = [
+const STREAM_API_KEY = 'kzevzsr5h2nf';
+const chatClient = StreamChat.getInstance(STREAM_API_KEY);
 
-  
-  {
-    _id: '1',
-    avatar: 'https://example.com/avatar1.jpg',
-    name: 'John Doe',
-    lastMessage: 'Hey, how are you?',
-    messages: [
-      { _id: '1', sender: 'John Doe', message: 'Hey, how are you?', time: '10:00 AM' },
-      { _id: '2', sender: 'You', message: "I'm good, thanks!", time: '10:05 AM' },
-    ],
-    isGroup: false,
-    userId: { _id: '1', profileImage: 'https://example.com/avatar1.jpg' },
-    lastMessageTime: new Date(),
-  },
-  {
-    _id: '2',
-    avatar: 'https://example.com/avatar2.jpg',
-    name: 'Jane Smith',
-    lastMessage: 'See you tomorrow!',
-    messages: [
-      { _id: '1', sender: 'Jane Smith', message: 'See you tomorrow!', time: '09:00 AM' },
-      { _id: '2', sender: 'You', message: 'Sure, see you then!', time: '09:05 AM' },
-    ],
-    isGroup: false,
-    userId: { _id: '2', profileImage: 'https://example.com/avatar2.jpg' },
-    lastMessageTime: new Date(),
-  },
-];
-
-function ChatView({ chat, onBack }) {
+function ChatView({ onBack }) {
+  const { channel } = useChatContext();
+  const dispatch = useDispatch();
+  const messages = useSelector((state) => state.chat.messages);
   const [newMessage, setNewMessage] = useState('');
-  const messagesEndRef = useRef(null);
-  const router = useRouter()
 
-  useEffect(() => {
-    if (!isAuthenticated()) {
-      console.log("User not authenticated, redirecting to login");
-      router.replace("/login");
-      return;
-    }
-  }, [router]);
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [chat.messages]);
-
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (newMessage.trim() !== '') {
-      // Add the new message to the chat
-      const newMessageObj = {
-        _id: String(chat.messages.length + 1),
-        sender: 'You',
-        message: newMessage,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
-      chat.messages.push(newMessageObj);
+    if (newMessage.trim() && channel?.id) {
+      await dispatch(sendMessage({
+        userId: channel.data.createdBy.id,
+        channelId: channel.id,
+        text: newMessage
+      }));
       setNewMessage('');
     }
   };
@@ -128,6 +83,10 @@ function ChatView({ chat, onBack }) {
             <Send className="h-4 w-4" />
           </Button>
         </form>
+        {/* <MessageList />
+      <form onSubmit={handleSendMessage} className="p-4 border-t md:mb-0 mb-12">
+        <MessageInput />
+      </form> */}
       </div>
     </div>
   );
