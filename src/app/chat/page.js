@@ -19,9 +19,9 @@ import {
   fetchAllUsers, 
   fetchChatToken, 
   fetchMessages, 
-  sendMessage, 
-  // fetchUserChats, 
-  fetchUserGroups 
+  sendMessage,  
+  // fetchUserGroups,
+  // fetchUserChats
 } from '@/features/chat/chatSlice';
 
 function ChatView({ chat, onBack }) {
@@ -48,9 +48,24 @@ function ChatView({ chat, onBack }) {
     }
   }, [router, chat, dispatch]);
 
-  // Extract messages for this specific chat
-  const messageData = allMessages && allMessages.data ? allMessages.data : [];
-  const displayMessages = Array.isArray(messageData) ? messageData : [];
+  // Extract messages for this specific chat - handle nested structure
+  const getMessagesForChannel = () => {
+    if (!allMessages) return [];
+    
+    // Check if messages are in the nested structure from your console output
+    if (allMessages[chat?.channelId]?.messages && Array.isArray(allMessages[chat?.channelId].messages)) {
+      return allMessages[chat?.channelId].messages;
+    }
+    
+    // Check if messages are in the data property
+    if (allMessages.data && Array.isArray(allMessages.data)) {
+      return allMessages.data;
+    }
+    
+    return [];
+  };
+
+  const displayMessages = getMessagesForChannel();
 
   // Log messages when they change for debugging
   useEffect(() => {
@@ -103,7 +118,7 @@ function ChatView({ chat, onBack }) {
         ) : (
           <div className="space-y-4">
             {displayMessages && displayMessages.length > 0 ? (
-              displayMessages.map((message, index) => (
+              displayMessages?.map((message, index) => (
                 <div
                   key={message._id || `msg-${index}`}
                   className={`flex ${
@@ -194,7 +209,7 @@ function UserList({ onSelectUser }) {
             <p>Loading...</p>
           </div>
         ) : filteredUsers.length > 0 ? (
-          filteredUsers.map(user => {
+          filteredUsers?.map(user => {
             // Handle different user object structures
             const userId = user._id || (user.id && user.id._id) || '';
             const userName = user.name || (user.id && user.id.name) || 'Unknown';
@@ -246,9 +261,9 @@ function CreateGroupDialog({ open, onOpenChange }) {
         // Check if group was created successfully and refresh groups list
         if (result.payload?.data) {
           // Force refresh of groups list
-          if (currentUser?._id) {
-            dispatch(fetchUserGroups(currentUser._id));
-          }
+          // if (currentUser?._id) {
+          //   dispatch(fetchUserGroups(currentUser._id));
+          // }
         }
       });
       setGroupName('');
@@ -275,12 +290,57 @@ function CreateGroupDialog({ open, onOpenChange }) {
   );
 }
 
+function JoinGroupDialog({ open, onOpenChange }) {
+  const [groupCode, setGroupCode] = useState('');
+  const dispatch = useDispatch();
+  
+  // Get current user from localStorage
+  const currentUser = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user')) : null;
+  
+  const handleJoinGroup = () => {
+    if (groupCode.trim() && currentUser?._id) {
+      // Implement your join group logic here
+      // This would typically be a dispatch to your joinPublicGroup action
+      dispatch(joinPublicGroup({ 
+        userId: currentUser._id, 
+        groupCode 
+      })).then((result) => {
+        if (result.payload?.success) {
+          // Refresh groups list after joining
+          // dispatch(fetchUserGroups(currentUser._id));
+        }
+      });
+      setGroupCode('');
+      onOpenChange(false);
+    }
+  };
+
+  return (
+    <DialogContent className="bg-white text-black">
+      <DialogHeader>
+        <DialogTitle>Join Public Group</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-4 pt-4">
+        <Input
+          placeholder="Group Code"
+          value={groupCode}
+          onChange={(e) => setGroupCode(e.target.value)}
+        />
+        <Button className="w-full" onClick={handleJoinGroup}>
+          Join Group
+        </Button>
+      </div>
+    </DialogContent>
+  );
+}
+
 export default function WhatsAppClone() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('chats');
   const [selectedChat, setSelectedChat] = useState(null);
   const [newChatDialog, setNewChatDialog] = useState(false);
   const [newGroupDialog, setNewGroupDialog] = useState(false);
+  const [joinGroupDialog, setJoinGroupDialog] = useState(false);
   
   const dispatch = useDispatch();
   const router = useRouter();
@@ -312,7 +372,7 @@ export default function WhatsAppClone() {
     if (currentUser && currentUser._id) {
       dispatch(fetchChatToken({ userId: currentUser._id }));
       
-      // Fetch all user chats and groups on component mount
+      // Fetch user chats and groups
       // dispatch(fetchUserChats(currentUser._id));
       // dispatch(fetchUserGroups(currentUser._id));
       
@@ -335,27 +395,40 @@ export default function WhatsAppClone() {
     const userAvatar = user.profileImage || (user.id && user.id.profileImage) || '';
     
     if (currentUser && userId && userId !== currentUser._id) {
-      dispatch(createPrivateChat({
-        senderId: currentUser._id,
-        receiverId: userId
-      })).then((result) => {
-        if (result.payload?.data) {
-          // Create a chat object
-          const chatData = {
-            channelId: result.payload.data.channelId,
-            name: userName,
-            _id: userId,
-            avatar: userAvatar,
-            messages: []
-          };
-          
-          setSelectedChat(chatData);
-          setNewChatDialog(false);
-          
-          // Refresh chats list
-          // dispatch(fetchUserChats(currentUser._id));
-        }
-      });
+      // Check if a chat already exists with this user
+      const existingChat = chatsList.find(chat => 
+        chat.participants && 
+        chat.participants.some(participant => participant._id === userId)
+      );
+      
+      if (existingChat) {
+        // If chat exists, select it
+        setSelectedChat(existingChat);
+        setNewChatDialog(false);
+      } else {
+        // Create new chat if it doesn't exist
+        dispatch(createPrivateChat({
+          senderId: currentUser._id,
+          receiverId: userId
+        })).then((result) => {
+          if (result.payload?.data) {
+            // Create a chat object
+            const chatData = {
+              channelId: result.payload.data.channelId,
+              name: userName,
+              _id: userId,
+              avatar: userAvatar,
+              messages: []
+            };
+            
+            setSelectedChat(chatData);
+            setNewChatDialog(false);
+            
+            // Refresh chats list
+            // dispatch(fetchUserChats(currentUser._id));
+          }
+        });
+      }
     }
   };
 
@@ -383,7 +456,7 @@ export default function WhatsAppClone() {
               <Dialog open={newChatDialog} onOpenChange={setNewChatDialog}>
                 <DialogTrigger asChild>
                   <Button variant="outline">
-                    <Plus className="h-5 w-5" />
+                    <Plus className="h-5 w-5" color={'#C03046'} />
                     <span className="sr-only">New Chat</span>
                   </Button>
                 </DialogTrigger>
@@ -395,7 +468,7 @@ export default function WhatsAppClone() {
               <Dialog open={newGroupDialog} onOpenChange={setNewGroupDialog}>
                 <DialogTrigger asChild>
                   <Button variant="outline">
-                    <Users className="h-5 w-5" />
+                    <Users className="h-5 w-5" color={'#C03046'} />
                     <span className="sr-only">New Group</span>
                   </Button>
                 </DialogTrigger>
@@ -435,7 +508,7 @@ export default function WhatsAppClone() {
                     <p>Loading...</p>
                   </div>
                 ) : filteredChats.length > 0 ? (
-                  filteredChats.map((chat) => (
+                  filteredChats?.map((chat) => (
                     <div
                       key={chat._id || chat.channelId}
                       className={`flex items-center space-x-4 p-4 ${
@@ -445,18 +518,18 @@ export default function WhatsAppClone() {
                       onClick={() => handleChatClick(chat)}
                     >
                       <Avatar>
-                        <AvatarImage src={chat.profileImage || chat.avatar} alt={chat.name} />
-                        <AvatarFallback>{chat.name && chat.name[0] ? chat.name[0].toUpperCase() : 'U'}</AvatarFallback>
+                        <AvatarImage src={chat?.profileImage || chat?.avatar} alt={chat?.name} />
+                        <AvatarFallback>{chat?.name && chat?.name[0] ? chat?.name[0].toUpperCase() : 'U'}</AvatarFallback>
                       </Avatar>
                       <div className="flex-grow">
-                        <h3 className="font-semibold">{chat.name}</h3>
+                        <h3 className="font-semibold">{chat?.name}</h3>
                         <div className="flex justify-between">
                           <p className="text-sm text-muted-foreground">
-                            {chat.lastMessage?.text || chat.lastMessage || 'No messages yet'}
+                            {chat?.lastMessage?.text || chat?.lastMessage || 'No messages yet'}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {chat.lastMessageTime ? 
-                              formatDistanceToNow(new Date(chat.lastMessageTime), { addSuffix: true }) : 
+                            {chat?.lastMessageTime ? 
+                              formatDistanceToNow(new Date(chat?.lastMessageTime), { addSuffix: true }) : 
                               'just now'}
                           </p>
                         </div>
@@ -471,13 +544,24 @@ export default function WhatsAppClone() {
               </ScrollArea>
             </TabsContent>
             <TabsContent value="groups" className="flex-grow">
-              <ScrollArea className="h-[calc(92vh-200px)] md:pb-10 pb-20">
+              <div className="flex justify-between items-center px-4 py-2">
+                <h3 className="font-semibold">Your Groups</h3>
+                <Dialog open={joinGroupDialog} onOpenChange={setJoinGroupDialog}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      Join Public Group
+                    </Button>
+                  </DialogTrigger>
+                  <JoinGroupDialog open={joinGroupDialog} onOpenChange={setJoinGroupDialog} />
+                </Dialog>
+              </div>
+              <ScrollArea className="h-[calc(92vh-230px)] md:pb-10 pb-20">
                 {loading ? (
                   <div className="flex justify-center items-center p-4">
                     <p>Loading...</p>
                   </div>
                 ) : filteredGroups.length > 0 ? (
-                  filteredGroups.map((group) => (
+                  filteredGroups?.map((group) => (
                     <div
                       key={group._id || group.channelId}
                       className={`flex items-center space-x-4 p-4 ${

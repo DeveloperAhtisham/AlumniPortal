@@ -1,11 +1,10 @@
 "use client"
 
-import jwt from "jsonwebtoken"
-
 import { useState, useEffect } from "react"
 import { Plus, Pencil, ArrowRight, User, Mail, Briefcase, Building, MapPin, Phone, Linkedin, Github, X } from "lucide-react"
 import axios from 'axios'
 import Link from 'next/link'
+import { useSelector, useDispatch } from "react-redux"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,57 +16,53 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
-// importing urls
+// importing urls and services
 import { getUserInfoUrl, updateUserProfileUrl, deleteAssetUrl } from "@/urls/urls.js"
 import useCloudinaryImageUploader from "@/services/cloudinary"
 import { useToast } from "@/hooks/use-toast"
 
-// Import your data arrays here
+// Import data arrays
 import { collegeName } from '@/data/college'
-import { stateName } from '@/data/state'
-import { batch } from '@/data/batch'
 import { branch } from '@/data/branch'
+import { batch } from '@/data/batch'
 import Navbar2 from "@/components/header/Navbar2"
-import { useSelector, useDispatch } from "react-redux"
 import { UpdateAlumniProfile } from "@/features/alumni/alumniSlice"
 
 export default function ProfileForm() {
-  const dispatch = useDispatch() // Initialize dispatch
-
+  const dispatch = useDispatch()
+  const { toast } = useToast()
+  const userData = useSelector((state) => state?.userInfo?.userData)
+  
   const {
     previewUrl,
     uploading,
-    error,
     handleImageChange,
     uploadImage
-  } = useCloudinaryImageUploader();
-
-  const { toast } = useToast()
+  } = useCloudinaryImageUploader()
 
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [user, setUser] = useState(null)
-  const [inputs, setInputs] = useState({
+  
+  // Form state management
+  const [formData, setFormData] = useState({
+    userId: "",
     name: "",
     email: "",
     profileImage: "",
     collegeName: "",
     branch: "",
-    state: "",
     batch: "",
+    about: "",
     location: "",
     contactNumber: "",
-    companyName: "",
-    jobTitle: "",
-    userId: "",
     linkedin: "",
     github: "",
-    bio: "",
     skills: [],
     experiences: [],
     education: []
   })
-  const [hasMounted, setHasMounted] = useState(false);
+
+  // New entries forms
   const [newExperience, setNewExperience] = useState({
     company: '',
     position: '',
@@ -75,6 +70,7 @@ export default function ProfileForm() {
     endDate: '',
     description: ''
   })
+  
   const [newEdu, setNewEdu] = useState({
     collegeName: '',
     course: '',
@@ -82,84 +78,96 @@ export default function ProfileForm() {
     startDate: '',
     endDate: '',
   })
-  const userData = useSelector((state) => state?.userInfo?.userData);
-  console.log("🚀 ~ AlumniHome ~ userData:", userData)
-  
-  useEffect(() => {
-    setHasMounted(true);
-  }, []);
 
+  // Load user data from Redux store on component mount
   useEffect(() => {
-    fetchUser()
-  }, [])
-
-  function fetchUser() {
-    // If userData is available from Redux, use it to populate form
     if (userData) {
-      setUser(userData)
-      
-      // Format experiences from API format to form format
-      const formattedExperiences = userData.experience ? userData.experience.map(exp => ({
-        company: exp.companyName || "",
-        position: exp.role || "",
-        startDate: exp.startDate ? new Date(exp.startDate).toISOString().split('T')[0] : "",
-        endDate: exp.endDate ? new Date(exp.endDate).toISOString().split('T')[0] : "",
-        description: exp.description || ""
-      })) : []
-      
-      // Format education from API format to form format
-      const formattedEducation = userData.education ? userData.education.map(edu => ({
-        collegeName: edu.universityName || "",
-        course: edu.degree || "",
-        branch: userData.branch || "",
-        startDate: edu.startDate ? new Date(edu.startDate).toISOString().split('T')[0] : "",
-        endDate: edu.endDate ? new Date(edu.endDate).toISOString().split('T')[0] : ""
-      })) : []
-      
-      setInputs({
-        name: userData?.userId?.name || "",
-        email: userData?.userId?.email || "",
-        profileImage: userData?.profileImage || "",
-        collegeName: userData?.collegeName || "",
-        branch: userData?.branch || "",
-        state: userData?.state || "",
-        batch: userData?.batch || "",
-        location: userData?.contactInfo?.location || "",
-        contactNumber: userData?.contactNumber || "",
-        companyName: userData?.experience?.[0]?.companyName || "",
-        jobTitle: userData?.experience?.[0]?.role || "",
-        userId: userData?._id || "",
-        linkedin: userData?.contactInfo?.linkedin || "",
-        github: userData?.contactInfo?.github || "",
-        bio: userData?.about || "",
-        skills: userData?.skills || [],
-        experiences: formattedExperiences,
-        education: formattedEducation,
-      })
+      populateFormData(userData)
     }
+  }, [userData])
+
+  // Format data from API format to form format
+  function populateFormData(userData) {
+    if (!userData) return
+
+    // Format experiences
+    const formattedExperiences = userData.experience ? userData.experience.map(exp => ({
+      company: exp.companyName || "",
+      position: exp.role || "",
+      startDate: exp.startDate ? new Date(exp.startDate).toISOString().split('T')[0] : "",
+      endDate: exp.endDate ? new Date(exp.endDate).toISOString().split('T')[0] : "",
+      description: exp.description || ""
+    })) : []
+    
+    // Format education
+    const formattedEducation = userData.education ? userData.education.map(edu => ({
+      collegeName: edu.universityName || "",
+      course: edu.degree || "",
+      branch: userData.branch || "",
+      startDate: edu.startDate ? new Date(edu.startDate).toISOString().split('T')[0] : "",
+      endDate: edu.endDate ? new Date(edu.endDate).toISOString().split('T')[0] : ""
+    })) : []
+    
+    setFormData({
+      userId: userData?._id || "",
+      name: userData?.userId?.name || "",
+      email: userData?.userId?.email || "",
+      profileImage: userData?.profileImage || "",
+      collegeName: userData?.collegeName || "",
+      branch: userData?.branch || "",
+      batch: userData?.batch || "",
+      about: userData?.about || "",
+      location: userData?.contactInfo?.location || "",
+      contactNumber: userData?.contactNumber || "",
+      linkedin: userData?.contactInfo?.linkedin || "",
+      github: userData?.contactInfo?.github || "",
+      skills: userData?.skills || [],
+      experiences: formattedExperiences,
+      education: formattedEducation
+    })
   }
 
+  // Handle form field changes
   const handleChange = (e) => {
-    if (!hasMounted) return; // preventing function to trigger at the time of mounting as select field will initialize to empty string
     const { name, value } = e.target
-    setInputs(prevInputs => ({
-      ...prevInputs,
-      [name]: value
-    }))
+    setFormData(prev => ({ ...prev, [name]: value }))
   }
 
+  // Handle dropdown select changes
+  const handleSelectChange = (name, value) => {
+    setFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  // Handle skills input (comma-separated)
+  const handleSkillsChange = (e) => {
+    const skillsArray = e.target.value.split(',').map(skill => skill.trim()).filter(Boolean)
+    setFormData(prev => ({ ...prev, skills: skillsArray }))
+  }
+
+  // Experience form handlers
   const handleExperienceChange = (e) => {
     const { name, value } = e.target
     setNewExperience(prev => ({ ...prev, [name]: value }))
   }
 
-  const handleEduChange = (e) => {
-    const { name, value } = e.target
-    setNewEdu(prev => ({ ...prev, [name]: value }))
-  }
-
   const addExperience = () => {
-    setInputs((prev) => ({ ...prev, experiences: [...prev.experiences, newExperience] }))
+    // Validate required fields
+    if (!newExperience.company || !newExperience.position || !newExperience.startDate) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in the required experience fields",
+        variant: "destructive",
+        duration: 2000
+      })
+      return
+    }
+    
+    setFormData(prev => ({ 
+      ...prev, 
+      experiences: [...prev.experiences, newExperience] 
+    }))
+    
+    // Reset form
     setNewExperience({
       company: '',
       position: '',
@@ -169,8 +177,36 @@ export default function ProfileForm() {
     })
   }
 
+  const removeExperience = (index) => {
+    const updatedExperiences = [...formData.experiences]
+    updatedExperiences.splice(index, 1)
+    setFormData(prev => ({ ...prev, experiences: updatedExperiences }))
+  }
+
+  // Education form handlers
+  const handleEduChange = (e) => {
+    const { name, value } = e.target
+    setNewEdu(prev => ({ ...prev, [name]: value }))
+  }
+
   const addEdu = () => {
-    setInputs((prev) => ({ ...prev, education: [...prev.education, newEdu] }))
+    // Validate required fields
+    if (!newEdu.collegeName || !newEdu.course || !newEdu.startDate) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in the required education fields",
+        variant: "destructive",
+        duration: 2000
+      })
+      return
+    }
+    
+    setFormData(prev => ({ 
+      ...prev, 
+      education: [...prev.education, newEdu] 
+    }))
+    
+    // Reset form
     setNewEdu({
       collegeName: '',
       course: '',
@@ -180,41 +216,42 @@ export default function ProfileForm() {
     })
   }
 
-  const removeExperience = (index) => {
-    const updatedExperiences = [...inputs.experiences]
-    updatedExperiences.splice(index, 1)
-    setInputs((prev) => ({ ...prev, experiences: updatedExperiences }))
-  }
-
   const removeEdu = (index) => {
-    const updatedEdu = [...inputs.education]
+    const updatedEdu = [...formData.education]
     updatedEdu.splice(index, 1)
-    setInputs((prev) => ({ ...prev, education: updatedEdu }))
+    setFormData(prev => ({ ...prev, education: updatedEdu }))
   }
 
+  // Submit form data
   async function handleSubmit(e) {
     e.preventDefault()
     setIsLoading(true)
+    
     try {
       // Format data for API according to the expected structure
       const profileData = {
-        userId: inputs.userId,
+        userId: formData.userId,
         contactInfo: {
-          linkedin: inputs.linkedin,
-          github: inputs.github,
-          email: inputs.email,
-          location: inputs.location
+          linkedin: formData.linkedin,
+          github: formData.github,
+          email: formData.email,
+          location: formData.location
         },
-        about: inputs.bio,
-        skills: inputs.skills,
-        batch: inputs.batch,
-        experience: inputs.experiences.map(exp => ({
+        about: formData.about,
+        skills: formData.skills,
+        batch: formData.batch,
+        branch: formData.branch,
+        collegeName: formData.collegeName,
+        contactNumber: formData.contactNumber,
+        experience: formData.experiences.map(exp => ({
           companyName: exp.company,
           isPresent: !exp.endDate,
           description: exp.description,
-          role: exp.position
+          role: exp.position,
+          startDate: exp.startDate,
+          endDate: exp.endDate
         })),
-        education: inputs.education.map(edu => ({
+        education: formData.education.map(edu => ({
           universityName: edu.collegeName,
           degree: edu.course,
           startDate: edu.startDate,
@@ -225,13 +262,7 @@ export default function ProfileForm() {
 
       // Dispatch the Redux action
       const result = await dispatch(UpdateAlumniProfile(profileData)).unwrap()
-      console.log("Profile update result:", result)
-
-      // Also keep the existing axios call if you need both methods during transition
-      const response = await axios.post(updateUserProfileUrl, inputs)
-      console.log(response.data)
       
-      await getUser()
       toast({
         title: "Success",
         description: "Profile updated successfully",
@@ -239,7 +270,7 @@ export default function ProfileForm() {
         duration: 2000
       })
     } catch (error) {
-      console.error(error)
+      console.error("Update error:", error)
       toast({
         title: "Error",
         description: "Failed to update profile",
@@ -251,75 +282,54 @@ export default function ProfileForm() {
     }
   }
 
-  async function updateProfileImage(e) {
-    // console.log("updating..")
+  // Update profile image
+  async function updateProfileImage() {
     setIsLoading(true)
-    const prevImagePubId = inputs.profileImage.replace("https://res.cloudinary.com/dcqgytpzz/image/upload/", "")?.split("/")[1]?.split(".")[0];
-    // console.log(prevImagePubId)
-    let imageInfo = {}
+    
     try {
-      await uploadImage()
-        .then((res) => {
-          console.log(res)
-          imageInfo = res
-        })
-        .catch((err) => {
-          console.log(err)
-          return
-        })
-    } catch (error) {
-      console.log(error)
-      return
-    }
-    try {
-      // Update via Redux action
+      // Get previous image ID for cleanup
+      const prevImagePubId = formData.profileImage.replace("https://res.cloudinary.com/dcqgytpzz/image/upload/", "")?.split("/")[1]?.split(".")[0]
+      
+      // Upload new image
+      const imageInfo = await uploadImage()
+      if (!imageInfo) {
+        throw new Error("Image upload failed")
+      }
+      
+      // Update profile with new image
       const profileImageData = {
-        userId: inputs.userId,
+        userId: formData.userId,
         profileImage: imageInfo.secure_url
       }
+      
       await dispatch(UpdateAlumniProfile(profileImageData)).unwrap()
-
-      // Also keep existing axios call
-      await axios.post(updateUserProfileUrl, { userId: inputs.userId, profileImage: imageInfo.secure_url })
-        .then((res) => {
-          // console.log(res.data)
-          setInputs({ ...inputs, profileImage: imageInfo.secure_url })
-          toast({
-            title: "Success",
-            description: "Profile Image updated successfully",
-            variant: "green",
-            duration: 2000
-          })
-          setIsLoading(false)
-          setIsOpen(false)
-        })
-        .catch((err) => {
-          console.log(err)
-          setIsLoading(false)
-          return
-        })
-      // updating user info saved locally
-      await getUser()
-      await axios.post(deleteAssetUrl, { publicId: prevImagePubId })
-    } catch (error) {
-      console.log(error)
-      setIsLoading(false)
-      return
-    }
-  }
-
-  async function getUser() {
-    try {
-      const response = await axios.post(getUserInfoUrl, { userId: inputs.userId })
-      if (typeof window !== 'undefined') {
-        const user = (response.data.user)
-        const token = jwt.sign(user, process.env.NEXT_PUBLIC_JWT_SECRET, { expiresIn: '3d' })
-        localStorage.setItem("amsjbckumr", token)
+      
+      // Update form data state
+      setFormData(prev => ({ ...prev, profileImage: imageInfo.secure_url }))
+      
+      // Delete old image if exists
+      if (prevImagePubId) {
+        await axios.post(deleteAssetUrl, { publicId: prevImagePubId })
       }
-      // console.log(response.data.user)
-      fetchUser()
+      
+      toast({
+        title: "Success",
+        description: "Profile image updated successfully",
+        variant: "green",
+        duration: 2000
+      })
+      
+      setIsOpen(false)
     } catch (error) {
-      console.error(error)
+      console.error("Image update error:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update profile image",
+        variant: "destructive",
+        duration: 2000
+      })
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -327,9 +337,9 @@ export default function ProfileForm() {
     <div>
       <Navbar2 />
       <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <Card className="w-full max-w-4xl mx-auto ">
+        <Card className="w-full max-w-4xl mx-auto">
           <div className="relative bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-10 md:py-16 sm:px-6 lg:px-8 mb-10 rounded-t-lg">
-            <h1 className="text-2xl sm:text-3xl font-bold pb-5 text-white" >Edit Profile</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold pb-5 text-white">Edit Profile</h1>
             <div className="mb-6 flex justify-center">
               <Avatar className="w-32 h-32 border-4 border-white">
                 <AvatarImage src={userData?.profileImage} alt={userData?.userId?.name || 'User'} />
@@ -338,7 +348,7 @@ export default function ProfileForm() {
               <Dialog open={isOpen} onOpenChange={setIsOpen}>
                 <DialogTrigger asChild>
                   <Button size="icon" className="bg-transparent mt-[60px] text-white shadow-none hover:bg-transparent">
-                    <Pencil className="w-5 hover:text-gray-800  transition-all duration-200" />
+                    <Pencil className="w-5 hover:text-gray-800 transition-all duration-200" />
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[425px]">
@@ -347,14 +357,21 @@ export default function ProfileForm() {
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="name" className="text-right">
+                      <Label htmlFor="profileImage" className="text-right">
                         Profile Image
                       </Label>
-                      <Input id="name" onChange={handleImageChange} type="file" accept="image/*" className="col-span-3" />
+                      <Input id="profileImage" onChange={handleImageChange} type="file" accept="image/*" className="col-span-3" />
                     </div>
+                    {previewUrl && (
+                      <div className="flex justify-center">
+                        <img src={previewUrl} alt="Preview" className="max-h-40 rounded" />
+                      </div>
+                    )}
                   </div>
                   <DialogFooter>
-                    <Button disabled={isLoading} onClick={updateProfileImage} type="submit">Save changes</Button>
+                    <Button disabled={isLoading || !previewUrl} onClick={updateProfileImage} type="button">
+                      {isLoading ? "Uploading..." : "Save changes"}
+                    </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -371,8 +388,7 @@ export default function ProfileForm() {
           </div>
           <CardContent>
             <Tabs defaultValue="basic" className="w-full">
-
-              <TabsList className=" w-full flex flex-row mb-6 justify-evenly">
+              <TabsList className="w-full flex flex-row mb-6 justify-evenly">
                 <TabsTrigger className="flex-grow sm:flex-grow-0 text-xs sm:text-sm py-2 px-[2px] md:px-10 m-0.5 sm:m-1 rounded-sm data-[state=active]:bg-blue-600 data-[state=active]:text-primary-foreground my-1" value="basic">Basic</TabsTrigger>
                 <TabsTrigger className="flex-grow sm:flex-grow-0 text-xs sm:text-sm py-2 px-[2px] md:px-10 m-0.5 sm:m-1 rounded-sm data-[state=active]:bg-blue-600 data-[state=active]:text-primary-foreground my-1" value="professional">Professional</TabsTrigger>
                 <TabsTrigger className="flex-grow sm:flex-grow-0 text-xs sm:text-sm py-2 px-[2px] md:px-10 m-0.5 sm:m-1 rounded-sm data-[state=active]:bg-blue-600 data-[state=active]:text-primary-foreground my-1" value="education">Education</TabsTrigger>
@@ -380,7 +396,7 @@ export default function ProfileForm() {
               </TabsList>
 
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Basic  */}
+                {/* Basic Information Tab */}
                 <TabsContent value="basic">
                   <div className="space-y-4">
                     <div>
@@ -395,8 +411,9 @@ export default function ProfileForm() {
                           id="name"
                           className="pl-10"
                           placeholder="Your full name"
-                          value={userData?.userId?.name || ""}
+                          value={formData.name}
                           onChange={handleChange}
+                          disabled
                         />
                       </div>
                     </div>
@@ -412,8 +429,9 @@ export default function ProfileForm() {
                           id="email"
                           className="pl-10"
                           placeholder="Your email address"
-                          value={userData?.userId?.email || ""}
+                          value={formData.email}
                           onChange={handleChange}
+                          disabled
                         />
                       </div>
                     </div>
@@ -430,7 +448,7 @@ export default function ProfileForm() {
                             id="location"
                             className="pl-10"
                             placeholder="Your location"
-                            value={userData?.contactInfo?.location || ""}
+                            value={formData.location}
                             onChange={handleChange}
                           />
                         </div>
@@ -447,7 +465,7 @@ export default function ProfileForm() {
                             id="contactNumber"
                             className="pl-10"
                             placeholder="Your phone number"
-                            value={inputs.contactNumber}
+                            value={formData.contactNumber}
                             onChange={handleChange}
                           />
                         </div>
@@ -457,8 +475,8 @@ export default function ProfileForm() {
                       <label htmlFor="collegeName" className="block text-sm font-medium text-gray-700">College Name</label>
                       <Select
                         name="collegeName"
-                        value={inputs.collegeName}
-                        onValueChange={(value) => handleChange({ target: { name: 'collegeName', value } })}
+                        value={formData.collegeName}
+                        onValueChange={(value) => handleSelectChange('collegeName', value)}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select College" />
@@ -475,7 +493,11 @@ export default function ProfileForm() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label htmlFor="branch" className="block text-sm font-medium text-gray-700">Branch</label>
-                        <Select name="branch" value={inputs.branch} onValueChange={(value) => handleChange({ target: { name: 'branch', value } })}>
+                        <Select 
+                          name="branch" 
+                          value={formData.branch} 
+                          onValueChange={(value) => handleSelectChange('branch', value)}
+                        >
                           <SelectTrigger>
                             <SelectValue placeholder="Select Branch" />
                           </SelectTrigger>
@@ -490,7 +512,11 @@ export default function ProfileForm() {
                       </div>
                       <div>
                         <label htmlFor="batch" className="block text-sm font-medium text-gray-700">Batch</label>
-                        <Select name="batch" value={userData?.batch || ""} onValueChange={(value) => handleChange({ target: { name: 'batch', value } })}>
+                        <Select 
+                          name="batch" 
+                          value={formData.batch} 
+                          onValueChange={(value) => handleSelectChange('batch', value)}
+                        >
                           <SelectTrigger>
                             <SelectValue placeholder="Select Batch" />
                           </SelectTrigger>
@@ -507,53 +533,19 @@ export default function ProfileForm() {
                   </div>
                 </TabsContent>
 
-                {/* Professional */}
+                {/* Professional Tab */}
                 <TabsContent value="professional">
                   <div className="space-y-4">
-                    <div>
-                      <label htmlFor="jobTitle" className="block text-sm font-medium text-gray-700">Current Position</label>
-                      <div className="mt-1 relative rounded-md shadow-sm">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <Briefcase className="h-5 w-5 text-gray-400" aria-hidden="true" />
-                        </div>
-                        <Input
-                          type="text"
-                          name="jobTitle"
-                          id="jobTitle"
-                          className="pl-10"
-                          placeholder="Your current job title"
-                          value={userData?.experience?.[0]?.role || ""}
-                          onChange={handleChange}
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label htmlFor="companyName" className="block text-sm font-medium text-gray-700">Company</label>
-                      <div className="mt-1 relative rounded-md shadow-sm">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <Building className="h-5 w-5 text-gray-400" aria-hidden="true" />
-                        </div>
-                        <Input
-                          type="text"
-                          name="companyName"
-                          id="companyName"
-                          className="pl-10"
-                          placeholder="Your company name"
-                          value={userData?.experience?.[0]?.companyName || ""}
-                          onChange={handleChange}
-                        />
-                      </div>
-                    </div>
                     <div>
                       <label htmlFor="bio" className="block text-sm font-medium text-gray-700">Bio</label>
                       <div className="mt-1">
                         <Textarea
-                          name="bio"
-                          id="bio"
+                          name="about"
+                          id="about"
                           rows={3}
                           className="resize-none"
                           placeholder="Tell us a little bit about yourself"
-                          value={userData?.about || ""}
+                          value={formData.about}
                           onChange={handleChange}
                         />
                       </div>
@@ -573,7 +565,7 @@ export default function ProfileForm() {
                           id="linkedin"
                           className="pl-10"
                           placeholder="Your LinkedIn profile URL"
-                          value={userData?.contactInfo?.linkedin || ""}
+                          value={formData.linkedin}
                           onChange={handleChange}
                         />
                       </div>
@@ -590,7 +582,7 @@ export default function ProfileForm() {
                           id="github"
                           className="pl-10"
                           placeholder="Your GitHub profile URL"
-                          value={userData?.contactInfo?.github || ""}
+                          value={formData.github}
                           onChange={handleChange}
                         />
                       </div>
@@ -602,8 +594,8 @@ export default function ProfileForm() {
                         name="skills"
                         id="skills"
                         placeholder="Add skills (comma-separated)"
-                        value={(userData?.skills || []).join(',   ')}
-                        onChange={(e) => setInputs(prev => ({ ...prev, skills: e.target.value.split(',').map(skill => skill.trim()) }))}
+                        value={formData.skills.join(', ')}
+                        onChange={handleSkillsChange}
                       />
                       <p className="mt-2 text-sm text-gray-500">
                         Enter your skills separated by commas (e.g., Machine Learning, Cloud Computing, Data Science)
@@ -612,24 +604,24 @@ export default function ProfileForm() {
                   </div>
                 </TabsContent>
 
-                {/* Education  */}
+                {/* Education Tab */}
                 <TabsContent value="education">
                   <div className="space-y-4">
-                    {userData?.education?.map((edu, index) => (
-                      <Card key={index} className="relative" >
+                    {formData.education?.map((edu, index) => (
+                      <Card key={index} className="relative">
                         <CardHeader className="p-3 sm:p-4">
-                          <CardTitle className="text-sm sm:text-base">{edu?.degree}</CardTitle>
+                          <CardTitle className="text-sm sm:text-base">{edu.course}</CardTitle>
                           <Button
                             variant="ghost"
                             size="icon"
                             className="absolute top-2 right-2"
                             onClick={() => removeEdu(index)}
+                            type="button"
                           >
                             <X className="h-4 w-4" />
                           </Button>
                           <CardDescription className="text-xs sm:text-sm">
-                            {edu.universityName} • {new Date(edu.startDate).toLocaleDateString()} ~ 
-                            {edu.endDate ? new Date(edu.endDate).toLocaleDateString() : "Present"}
+                            {edu.collegeName} • {edu.startDate || 'N/A'} ~ {edu.endDate || "Present"}
                           </CardDescription>
                         </CardHeader>
                       </Card>
@@ -640,34 +632,65 @@ export default function ProfileForm() {
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-4">
-                          <div className="grid grid-cols-3 gap-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div className="space-y-2">
-                              <Label htmlFor="company">College Name</Label>
-                              <Input id="collegeName" name="collegeName" value={newEdu.collegeName} onChange={handleEduChange} />
+                              <Label htmlFor="edu-collegeName">College Name</Label>
+                              <Input 
+                                id="edu-collegeName" 
+                                name="collegeName" 
+                                value={newEdu.collegeName} 
+                                onChange={handleEduChange} 
+                              />
                             </div>
                             <div className="space-y-2">
-                              <Label htmlFor="position">Degree</Label>
-                              <Input id="course" name="course" value={newEdu.course} onChange={handleEduChange} />
+                              <Label htmlFor="edu-course">Degree</Label>
+                              <Input 
+                                id="edu-course" 
+                                name="course" 
+                                value={newEdu.course} 
+                                onChange={handleEduChange} 
+                              />
                             </div>
                             <div className="space-y-2">
-                              <Label htmlFor="position">Branch</Label>
-                              <Input id="branch" name="branch" value={newEdu.branch} onChange={handleEduChange} />
+                              <Label htmlFor="edu-branch">Branch</Label>
+                              <Input 
+                                id="edu-branch" 
+                                name="branch" 
+                                value={newEdu.branch} 
+                                onChange={handleEduChange} 
+                              />
                             </div>
                           </div>
-                          <div className="grid grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                              <Label htmlFor="startDate">Start Date</Label>
-                              <Input id="startDate" name="startDate" type="date" value={newEdu.startDate} onChange={handleEduChange} />
+                              <Label htmlFor="edu-startDate">Start Date</Label>
+                              <Input 
+                                id="edu-startDate" 
+                                name="startDate" 
+                                type="date" 
+                                value={newEdu.startDate} 
+                                onChange={handleEduChange} 
+                              />
                             </div>
                             <div className="space-y-2">
-                              <Label htmlFor="endDate">End Date</Label>
-                              <Input id="endDate" name="endDate" type="date" value={newEdu.endDate} onChange={handleEduChange} />
+                              <Label htmlFor="edu-endDate">End Date</Label>
+                              <Input 
+                                id="edu-endDate" 
+                                name="endDate" 
+                                type="date" 
+                                value={newEdu.endDate} 
+                                onChange={handleEduChange} 
+                              />
                             </div>
                           </div>
                         </div>
                       </CardContent>
                       <CardFooter>
-                        <Button type="button" onClick={addEdu} className="w-full md:w-1/3 mx-auto">
+                        <Button 
+                          type="button" 
+                          onClick={addEdu} 
+                          className="w-full md:w-1/3 mx-auto"
+                        >
                           <Plus className="mr-2 h-4 w-4" /> Add Education
                         </Button>
                       </CardFooter>
@@ -675,25 +698,26 @@ export default function ProfileForm() {
                   </div>
                 </TabsContent>
 
-                {/* Experience  */}
+                {/* Experience Tab */}
                 <TabsContent value="experience">
                   <div className="space-y-4">
-                    {userData?.experience?.map((exp, index) => (
+                    {formData.experiences?.map((exp, index) => (
                       <Card key={index} className="relative">
                         <CardHeader>
-                          <CardTitle>{exp.role} at {exp.companyName}</CardTitle>
+                          <CardTitle>{exp.position} at {exp.company}</CardTitle>
                           <Button
                             variant="ghost"
                             size="icon"
                             className="absolute top-2 right-2"
                             onClick={() => removeExperience(index)}
+                            type="button"
                           >
                             <X className="h-4 w-4" />
                           </Button>
                         </CardHeader>
                         <CardContent>
                           <p className="text-sm text-muted-foreground">
-                            {exp.startDate ? new Date(exp.startDate).toLocaleDateString() : ''} - {exp.isPresent ? 'Present' : (exp.endDate ? new Date(exp.endDate).toLocaleDateString() : '')}
+                            {exp.startDate || 'N/A'} - {exp.endDate || 'Present'}
                           </p>
                           <p className="mt-2">{exp.description}</p>
                         </CardContent>
@@ -705,20 +729,36 @@ export default function ProfileForm() {
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-4">
-                          <div className="grid grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                              <Label htmlFor="company">Company</Label>
-                              <Input id="company" name="company" value={newExperience.company} onChange={handleExperienceChange} />
+                              <Label htmlFor="exp-company">Company</Label>
+                              <Input 
+                                id="exp-company" 
+                                name="company" 
+                                value={newExperience.company} 
+                                onChange={handleExperienceChange} 
+                              />
                             </div>
                             <div className="space-y-2">
-                              <Label htmlFor="position">Position</Label>
-                              <Input id="position" name="position" value={newExperience.position} onChange={handleExperienceChange} />
+                              <Label htmlFor="exp-position">Position</Label>
+                              <Input 
+                                id="exp-position" 
+                                name="position" 
+                                value={newExperience.position} 
+                                onChange={handleExperienceChange} 
+                              />
                             </div>
                           </div>
-                          <div className="grid grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                              <Label htmlFor="startDate">Start Date</Label>
-                              <Input id="startDate" name="startDate" type="date" value={newExperience.startDate} onChange={handleExperienceChange} />
+                              <Label htmlFor="exp-startDate">Start Date</Label>
+                              <Input 
+                                id="exp-startDate" 
+                                name="startDate" 
+                                type="date" 
+                                value={newExperience.startDate} 
+                                onChange={handleExperienceChange} 
+                              />
                             </div>
                             <div className="space-y-2">
                               <Label htmlFor="endDate">End Date</Label>
@@ -740,7 +780,7 @@ export default function ProfileForm() {
                 </div>
               </TabsContent>
 
-              <Button type="submit" disabled={isLoading} className="w-full bg-blue-600">
+              <Button type="submit" onClick={handleSubmit} disabled={isLoading} className="w-full bg-blue-600">
                 {isLoading ? (
                   <>Updating... <ArrowRight className="ml-2 h-4 w-4 animate-spin " /></>
                 ) : (
