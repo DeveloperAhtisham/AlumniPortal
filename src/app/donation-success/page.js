@@ -1,9 +1,12 @@
+'use client';
+
+import { useSearchParams, useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
 
 const DonationSuccess = () => {
   const router = useRouter();
-  const { session_id } = router.query;
+  const searchParams = useSearchParams();
+  const session_id = searchParams.get('session_id'); // ✅ Correct way
   const [donationDetails, setDonationDetails] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -51,7 +54,7 @@ const DonationSuccess = () => {
         </p>
         
         <button 
-          onClick={() => router.push('/')}
+          onClick={() => router.push('/home')}
           className="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700"
         >
           Return to Homepage
