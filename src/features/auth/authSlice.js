@@ -1,6 +1,4 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import axios from "axios";
-// import { getUserInfo } from "./userInfoSlice";
 import client from "@/services/apiClient";
 import { setItem } from "@/services/storage/setItem";
 import { createAsyncThunkWrapper } from "@/redux/wrapper/createAsyncThunkWrapper";
