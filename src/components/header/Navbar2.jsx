@@ -44,7 +44,7 @@ function Navbar2() {
     { name: "Careers", href: "/jobposts", icon: <Search className="h-4 w-4 mr-2" /> },
     { name: "Messages", href: "/chat", icon: <Mail className="h-4 w-4 mr-2" /> },
     { name: "Memories", href: "/memories", icon: <SmilePlus className="h-4 w-4 mr-2" /> },
-    { name: "Campus", href: "/student-hub", icon: <Calendar className="h-4 w-4 mr-2" /> },
+    { name: "Student Hub", href: "/student-hub", icon: <Calendar className="h-4 w-4 mr-2" /> },
     { name: "Donation", href: "/donation", icon: <DollarSignIcon className="h-4 w-4 mr-2" /> },
   ]
 
@@ -91,7 +91,7 @@ function Navbar2() {
                 <Button variant="ghost" className="relative h-8 w-8 m-4 rounded-full">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={userData?.profileImage} alt={userData?.name} />
-                    <AvatarFallback>{userData?.name?.charAt(0)}</AvatarFallback>
+                    <AvatarFallback>{userData?.userId?.name?.charAt(0)}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>

@@ -26,8 +26,9 @@ const description1=["Stay connected with your Alumni and fellow classmates. Expl
 
 export default function AlumniHome() {
   const [isOpen, setIsOpen] = useState(false)
-
+  const { toast } = useToast()
   const toggleMenu = () => setIsOpen(!isOpen)
+    const isLoading = useSelector((state) => state.userInfo.loading);
   const userData = useSelector((state) => state?.userInfo?.userData);
   console.log("🚀 ~ AlumniHome ~ userData:", userData)
 
@@ -55,35 +56,116 @@ export default function AlumniHome() {
       router.replace("/login");
       return;
     }
-
-    // Fetch user info if authenticated
+  
     const fetchUserInfo = async () => {
       try {
         let userInfo;
-
+  
         if (user?.role === "alumni") {
-          userInfo = await dispatch(getAlumniInfo(userID));
+          userInfo = await dispatch(getAlumniInfo(userID)).unwrap();
         } else if (user?.role === "student") {
-          userInfo = await dispatch(getStudentInfo(userID));
+          userInfo = await dispatch(getStudentInfo(userID)).unwrap();
         }
-
+  
         console.log("✅ User Info:", userInfo);
-
-        if (userInfo?.payload?.status !== 200) {
-          toast({
-            variant: "destructive",
-            title: "Failed to fetch user info",
-          });
+  
+        if (!userInfo || Object.keys(userInfo).length === 0) {
+          // Redirect if user info is empty
+          if (user?.role === "alumni") {
+            router.replace("/profile/complete-alumni-profile");
+          } else if (user?.role === "student") {
+            router.replace("/profile/complete-student-profile");
+          }
         }
       } catch (error) {
-        console.error("Error fetching user info:", error);
+        console.error("Error fetching user info or API failed:", error);
+  
+        // If API fails (network, auth, server error), force redirect
+        if (user?.role === "alumni") {
+          router.replace("/profile/complete-alumni-profile");
+        } else if (user?.role === "student") {
+          router.replace("/profile/complete-student-profile");
+        }
+  
+        toast({
+          variant: "destructive",
+          title: "Failed to fetch user info",
+        });
       }
     };
-
+  
     if (userID) {
       fetchUserInfo();
+    } else {
+      // Fallback: if no userID, force redirection
+      if (user?.role === "alumni") {
+        router.replace("/profile/complete-alumni-profile");
+      } else if (user?.role === "student") {
+        router.replace("/profile/complete-student-profile");
+      }
     }
   }, [userID, user?.role, dispatch, router]);
+
+  
+  // useEffect(() => {
+  //   if (!isAuthenticated()) {
+  //     console.log("User not authenticated, redirecting to login");
+  //     router.replace("/login");
+  //     return;
+  //   }
+
+  //   // Fetch user info if authenticated
+  //   const fetchUserInfo = async () => {
+  //     try {
+  //       let userInfo;
+
+  //       if (user?.role === "alumni") {
+  //         userInfo = await dispatch(getAlumniInfo(userID));
+  //       } else if (user?.role === "student") {
+  //         userInfo = await dispatch(getStudentInfo(userID));
+  //       }
+
+  //       console.log("✅ User Info:", userInfo);
+
+  //       if (userInfo?.payload?.status !== 200) {
+  //         toast({
+  //           variant: "destructive",
+  //           title: "Failed to fetch user info",
+  //         });
+  //       }
+  //     } catch (error) {
+  //       console.error("Error fetching user info:", error);
+  //     }
+  //   };
+
+  //   if (userID) {
+  //     fetchUserInfo();
+  //   } else if (!isLoading && typeof userData === 'object' && Object.keys(userData).length === 0) {
+  //     if (user?.role === "alumni") {
+  //       router.replace("/profile/complete-alumni-profile");
+  //     } else if (user?.role === "student") {
+  //       router.replace("/profile/complete-student-profile");
+  //     }
+  //   }
+  // }, [userID, user?.role, dispatch, router]);
+
+  // useEffect(() => {
+  //   if (userData === undefined || userData === null) {
+  //     // Still loading or not yet fetched — do nothing
+  //     return;
+  //   }
+  
+  //   // Redirect only if userData is an empty object
+  //   if (!isLoading && typeof userData === 'object' && Object.keys(userData).length === 0) {
+  //     if (user?.role === "alumni") {
+  //       router.replace("/profile/complete-alumni-profile");
+  //     } else if (user?.role === "student") {
+  //       router.replace("/profile/complete-student-profile");
+  //     }
+  //   }
+  // }, [userData, isLoading, user?.role, router]);
+  
+  
 
 
   return (
@@ -277,14 +359,14 @@ function AlumniCard({ name, class: classYear, position,company , image, _id }) {
       <p className="text-sm text-gray-500 mb-1">Batch of {classYear}</p>
       <p className="text-sm text-gray-600 mb-4">{position}</p>
       <p className="text-sm text-gray-600 mb-4">At {company}</p>
-      <Button onClick={() => { router.push(`/profile/${_id}`) }} variant="outline">View Profile</Button>
+      <Button onClick={() => { router.push(`/alumni-profile/${_id}`) }} variant="outline">View Profile</Button>
     </Card>
   )
 }
 
 function InvolvementCard({ icon, title, description }) {
 
-  const { toast } = useToast()
+  
 
   const handleWelcomeClick = () => {
 
