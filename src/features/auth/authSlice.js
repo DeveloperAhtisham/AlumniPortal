@@ -60,7 +60,9 @@ export const handleSignupApi = createAsyncThunkWrapper(
   "user/signup",
   async (payload) => {
     console.log("🚀 API Hit Started: /auth/signup");
-    const response = await client.post("/auth/signup", payload);
+    const response = await client.post("/auth/signup", payload,{
+      "Content-Type": "multipart/form-data",
+    });
     console.log("🚀 ~ Signup Response:", response);
     const { data, status } = response || {};
     return { data, status };

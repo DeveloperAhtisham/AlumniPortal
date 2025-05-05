@@ -16,15 +16,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { IconMoneybag, IconPigMoney } from "@tabler/icons-react"
-import { useSelector } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
+import { getUser } from "@/services/checkAuth"
+import { getAlumniInfo, getStudentInfo } from "@/features/auth/userInfoSlice"
 
 function Navbar2() {
-  const [user, setUser] = useState("")
+
   const [isOpen, setIsOpen] = useState(false)
   // const [userData, setUserData] = useState({ collegeName: '', name: '' })
+  const dispatch = useDispatch();
   const router = useRouter()
   const pathname = usePathname()
-
+    const user = getUser();
+    const userID = user?._id ;
+    const profilePhoto = user?.profilePhoto ;
+    
   const logoutUser = () => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("user");
@@ -33,6 +39,23 @@ function Navbar2() {
     console.log('Loged out')
     router.replace("/login");
   };
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        if (user?.role === "alumni") {
+          await dispatch(getAlumniInfo(userID)).unwrap();
+        } else if (user?.role === "student") {
+          await dispatch(getStudentInfo(userID)).unwrap();
+        }
+      } catch (error) {
+        console.error("Error fetching user info:", error);
+      }
+    };
+  
+    if (userID) {
+      fetchUserInfo();
+    }
+  }, [userID, user?.role, dispatch]);
 
   const userData = useSelector((state) => state?.userInfo?.userData)
   console.log("🚀 ~ Navbar2 ~ userData:", userData)
@@ -90,8 +113,10 @@ function Navbar2() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 m-4 rounded-full">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={userData?.profileImage} alt={userData?.name} />
-                    <AvatarFallback>{userData?.userId?.name?.charAt(0)}</AvatarFallback>
+                    <AvatarImage src={profilePhoto} alt={user?.name} />
+                    <AvatarFallback>
+                      {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
+                    </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>

@@ -6,6 +6,8 @@ import userInfoSlice from "../features/auth/userInfoSlice"
 import alumniSlice from "../features/alumni/alumniSlice"
 import memorySlice from "../features/memoery/memorySlice"
 import chatSlice from "../features/chat/chatSlice"
+import feedbackSlice from "../features/feedback/feedbackSlice"
+import contactSlice from "../features/contact/contactSlice"
 
 // Combine all slices into a single rootReducer
 const rootReducer = combineReducers({
@@ -15,6 +17,8 @@ const rootReducer = combineReducers({
   alumniList: alumniSlice,
   memory: memorySlice,
   chat: chatSlice,
+  feedback: feedbackSlice,
+  contact: contactSlice,
 
 });
 
