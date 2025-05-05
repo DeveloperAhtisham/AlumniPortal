@@ -23,7 +23,7 @@ import { registerAlumni } from '@/features/alumni/alumniSlice';
 import { Toast } from '@radix-ui/react-toast';
 import Link from 'next/link';
 import Navbar2 from '@/components/header/Navbar2';
-import { toast } from '@/hooks/use-toast';
+import { toast, useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 
 export default function CreateProfilePage () {
@@ -36,6 +36,7 @@ export default function CreateProfilePage () {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const router = useRouter();
+    const { toast } = useToast()
 
   // Form data state
   const [formData, setFormData] = useState({
@@ -127,10 +128,7 @@ export default function CreateProfilePage () {
     });
   };
 
-  setFormData({
-    ...formData,
-    projects: [...formData.projects, newPro]
-  });
+
   // Add proper project handling functions
 const addProject = () => {
   if (!newPro.title || !newPro.description) {
@@ -294,7 +292,7 @@ const removeProject = (index) => {
       const result = await dispatch(registerAlumni(formattedData)).unwrap();
       
       if (result) {
-        Toast.success("Profile registered successfully!");
+       toast("Profile registered successfully!");
         router.replace("/home");
       }
     } catch (error) {

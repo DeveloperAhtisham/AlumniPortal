@@ -2,7 +2,7 @@
 
 import jwt from "jsonwebtoken"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Bell, Calendar, LayoutDashboard, LogOut, Mail, Menu, User, Users, X, GraduationCap, Briefcase, Search } from "lucide-react"
@@ -28,64 +28,66 @@ export default function AlumniHome() {
   const [isOpen, setIsOpen] = useState(false)
   const { toast } = useToast()
   const toggleMenu = () => setIsOpen(!isOpen)
-    const isLoading = useSelector((state) => state.userInfo.loading);
+  const isLoading = useSelector((state) => state.userInfo.loading);
   const userData = useSelector((state) => state?.userInfo?.userData);
   console.log("🚀 ~ AlumniHome ~ userData:", userData)
 
-    const alumniList = useSelector((state) => state?.alumniList?.alumniList)
-    console.log("✅s AlumniHome ~ alumniList:", alumniList)
-
+  const alumniList = useSelector((state) => state?.alumniList?.alumniList)
+  console.log("✅s AlumniHome ~ alumniList:", alumniList)
 
   const user = getUser();
-  const userID = user?._id ;
+  const userID = user?._id;
   const token = getToken();
   console.log("🚀 ~ AlumniHome ~ token:", token)
   console.log("🚀 ~ AlumniHome ~ user:", user)
-  //geting user info 
+  
   const router = useRouter();
   const dispatch = useDispatch();
-  // const token = useSelector((state) => state.auth.token); 
-
+  
+  // Fetch alumni list only once when component mounts
   useEffect(() => {
     dispatch(getAlumniList());
-  }, []);
+  }, [dispatch]);
 
+  // Fix for infinite re-renders: Use useRef to track if we've already started the auth check
+  const hasCheckedAuth = useRef(false);
+  const hasRedirected = useRef(false);
+  
   useEffect(() => {
-    if (!isAuthenticated()) {
-      console.log("User not authenticated, redirecting to login");
-      router.replace("/login");
+    // Only run this effect once and if we have a userID and role
+    if (hasCheckedAuth.current || hasRedirected.current || !userID || !user?.role) {
       return;
     }
+    
+    hasCheckedAuth.current = true;
+    
+    const runCheck = async () => {
+      if (!isAuthenticated()) {
+        hasRedirected.current = true;
+        router.replace("/login");
+        return;
+      }
   
-    const fetchUserInfo = async () => {
       try {
-        let userInfo;
-  
-        if (user?.role === "alumni") {
-          userInfo = await dispatch(getAlumniInfo(userID)).unwrap();
-        } else if (user?.role === "student") {
-          userInfo = await dispatch(getStudentInfo(userID)).unwrap();
+        let userInfoAction;
+        if (user.role === "alumni") {
+          userInfoAction = getAlumniInfo(userID);
+        } else if (user.role === "student") {
+          userInfoAction = getStudentInfo(userID);
+        } else {
+          return; // Exit if role is neither alumni nor student
         }
-  
-        console.log("✅ User Info:", userInfo);
-  
-        if (!userInfo || Object.keys(userInfo).length === 0) {
-          // Redirect if user info is empty
-          if (user?.role === "alumni") {
-            router.replace("/profile/complete-alumni-profile");
-          } else if (user?.role === "student") {
-            router.replace("/profile/complete-student-profile");
-          }
+        
+        const userInfoResult = await dispatch(userInfoAction).unwrap();
+        
+        if (!userInfoResult || Object.keys(userInfoResult).length === 0) {
+          hasRedirected.current = true;
+          router.replace(`/profile/complete-${user.role}-profile`);
         }
       } catch (error) {
-        console.error("Error fetching user info or API failed:", error);
-  
-        // If API fails (network, auth, server error), force redirect
-        if (user?.role === "alumni") {
-          router.replace("/profile/complete-alumni-profile");
-        } else if (user?.role === "student") {
-          router.replace("/profile/complete-student-profile");
-        }
+        console.error("Failed to fetch user info:", error);
+        hasRedirected.current = true;
+        router.replace(`/profile/complete-${user.role}-profile`);
   
         toast({
           variant: "destructive",
@@ -94,79 +96,8 @@ export default function AlumniHome() {
       }
     };
   
-    if (userID) {
-      fetchUserInfo();
-    } else {
-      // Fallback: if no userID, force redirection
-      if (user?.role === "alumni") {
-        router.replace("/profile/complete-alumni-profile");
-      } else if (user?.role === "student") {
-        router.replace("/profile/complete-student-profile");
-      }
-    }
-  }, [userID, user?.role, dispatch, router]);
-
-  
-  // useEffect(() => {
-  //   if (!isAuthenticated()) {
-  //     console.log("User not authenticated, redirecting to login");
-  //     router.replace("/login");
-  //     return;
-  //   }
-
-  //   // Fetch user info if authenticated
-  //   const fetchUserInfo = async () => {
-  //     try {
-  //       let userInfo;
-
-  //       if (user?.role === "alumni") {
-  //         userInfo = await dispatch(getAlumniInfo(userID));
-  //       } else if (user?.role === "student") {
-  //         userInfo = await dispatch(getStudentInfo(userID));
-  //       }
-
-  //       console.log("✅ User Info:", userInfo);
-
-  //       if (userInfo?.payload?.status !== 200) {
-  //         toast({
-  //           variant: "destructive",
-  //           title: "Failed to fetch user info",
-  //         });
-  //       }
-  //     } catch (error) {
-  //       console.error("Error fetching user info:", error);
-  //     }
-  //   };
-
-  //   if (userID) {
-  //     fetchUserInfo();
-  //   } else if (!isLoading && typeof userData === 'object' && Object.keys(userData).length === 0) {
-  //     if (user?.role === "alumni") {
-  //       router.replace("/profile/complete-alumni-profile");
-  //     } else if (user?.role === "student") {
-  //       router.replace("/profile/complete-student-profile");
-  //     }
-  //   }
-  // }, [userID, user?.role, dispatch, router]);
-
-  // useEffect(() => {
-  //   if (userData === undefined || userData === null) {
-  //     // Still loading or not yet fetched — do nothing
-  //     return;
-  //   }
-  
-  //   // Redirect only if userData is an empty object
-  //   if (!isLoading && typeof userData === 'object' && Object.keys(userData).length === 0) {
-  //     if (user?.role === "alumni") {
-  //       router.replace("/profile/complete-alumni-profile");
-  //     } else if (user?.role === "student") {
-  //       router.replace("/profile/complete-student-profile");
-  //     }
-  //   }
-  // }, [userData, isLoading, user?.role, router]);
-  
-  
-
+    runCheck();
+  }, [userID, user?.role, dispatch, router, toast]);
 
   return (
     <>
@@ -294,9 +225,6 @@ A walk down memory lane awaits as we honour their incredible journey and achieve
 }
 
 function EventCard({ title, date, description, image }) {
-
-
-
   const [isExpanded, setIsExpanded] = useState(false)
   const maxLength = 100 // Adjust this value to change the number of characters shown initially
 
@@ -309,15 +237,6 @@ function EventCard({ title, date, description, image }) {
     : description
 
   return (
-    // <Card className="flex flex-col overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-1">
-    //   <Image src={image} alt={title} width={400} height={200} className="object-cover  h-48 w-full" />
-    //   <CardContent className="p-6">
-    //     <h3 className="text-2xl font-semibold mb-2">{title}</h3>
-    //     <p className="text-sm text-gray-500 mb-4">{date}</p>
-    //     <p className="text-gray-600 mb-4">{description}</p>
-    //     {/* <Button variant="outline">Learn More</Button> */}
-    //   </CardContent>
-    // </Card>
     <Card className="flex flex-col overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-1">
       <Image src={image} alt={title} width={400} height={200} className="object-cover h-48 w-full" />
       <CardContent className="p-6">
@@ -339,15 +258,6 @@ function EventCard({ title, date, description, image }) {
 function AlumniCard({ name, class: classYear, position,company , image, _id }) {
   const router = useRouter()
   const [userData, setUserData] = useState({ collegeName: '', name: ''});
-  // useEffect(() => {
-
-  //   if (user) {
-  //     const { collegeName, name, profileImage } = user;
-
-  //     setUserData({ collegeName, name, profileImage });
-  //   }
-
-  // }, [])
 
   return (
     <Card className="flex flex-col justify-center items-center text-center p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1">
@@ -365,11 +275,9 @@ function AlumniCard({ name, class: classYear, position,company , image, _id }) {
 }
 
 function InvolvementCard({ icon, title, description }) {
-
-  
+  const { toast } = useToast()
 
   const handleWelcomeClick = () => {
-
     toast({
       variant: "green",
       title: "Request Submitted!",
@@ -385,4 +293,3 @@ function InvolvementCard({ icon, title, description }) {
     </Card>
   )
 }
-

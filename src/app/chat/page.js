@@ -19,10 +19,98 @@ import {
   fetchAllUsers, 
   fetchChatToken, 
   fetchMessages, 
-  sendMessage,  
-  // fetchUserGroups,
-  // fetchUserChats
+  sendMessage
 } from '@/features/chat/chatSlice';
+
+// New action to fetch user chats
+const fetchUserChats = (userId) => {
+  return async (dispatch) => {
+    dispatch({ type: 'chat/fetchUserChatsStart' });
+    try {
+      const response = await fetch(`/api/chat/user-chats/${userId}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        dispatch({ 
+          type: 'chat/fetchUserChatsSuccess', 
+          payload: data.chats 
+        });
+        return data.chats;
+      } else {
+        throw new Error(data.message || 'Failed to fetch user chats');
+      }
+    } catch (error) {
+      dispatch({ 
+        type: 'chat/fetchUserChatsFailure', 
+        payload: error.message 
+      });
+      return [];
+    }
+  };
+};
+
+// New action to fetch user groups
+const fetchUserGroups = (userId) => {
+  return async (dispatch) => {
+    dispatch({ type: 'chat/fetchUserGroupsStart' });
+    try {
+      const response = await fetch(`/api/chat/user-groups/${userId}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        dispatch({ 
+          type: 'chat/fetchUserGroupsSuccess', 
+          payload: data.groups 
+        });
+        return data.groups;
+      } else {
+        throw new Error(data.message || 'Failed to fetch user groups');
+      }
+    } catch (error) {
+      dispatch({ 
+        type: 'chat/fetchUserGroupsFailure', 
+        payload: error.message 
+      });
+      return [];
+    }
+  };
+};
+
+// New action to join public group
+const joinPublicGroup = (data) => {
+  return async (dispatch) => {
+    dispatch({ type: 'chat/joinPublicGroupStart' });
+    try {
+      const response = await fetch('/api/chat/join-group', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        dispatch({ 
+          type: 'chat/joinPublicGroupSuccess', 
+          payload: result 
+        });
+      } else {
+        throw new Error(result.message || 'Failed to join group');
+      }
+      
+      return result;
+    } catch (error) {
+      dispatch({ 
+        type: 'chat/joinPublicGroupFailure', 
+        payload: error.message 
+      });
+      
+      return { success: false, error: error.message };
+    }
+  };
+};
 
 function ChatView({ chat, onBack }) {
   const [newMessage, setNewMessage] = useState('');
@@ -46,9 +134,19 @@ function ChatView({ chat, onBack }) {
       dispatch(fetchMessages(chat.channelId));
       console.log("Fetching messages for channel:", chat.channelId);
     }
+
+    // Set up a polling mechanism to fetch messages every 3 seconds
+    const messageInterval = setInterval(() => {
+      if (chat?.channelId) {
+        dispatch(fetchMessages(chat.channelId));
+      }
+    }, 3000);
+
+    // Clear interval on cleanup
+    return () => clearInterval(messageInterval);
   }, [router, chat, dispatch]);
 
-  // Extract messages for this specific chat - handle nested structure
+  // Extract messages for this specific chat - improved to handle all possible message formats
   const getMessagesForChannel = () => {
     if (!allMessages) return [];
     
@@ -57,9 +155,24 @@ function ChatView({ chat, onBack }) {
       return allMessages[chat?.channelId].messages;
     }
     
+    // Check if message object is nested one level deeper
+    if (allMessages[chat?.channelId]?.[0]?.message?.message) {
+      return [allMessages[chat?.channelId][0].message.message];
+    }
+    
     // Check if messages are in the data property
     if (allMessages.data && Array.isArray(allMessages.data)) {
       return allMessages.data;
+    }
+    
+    // If we have a single message object
+    if (allMessages.message) {
+      return [allMessages.message];
+    }
+    
+    // If the allMessages is an array itself
+    if (Array.isArray(allMessages)) {
+      return allMessages;
     }
     
     return [];
@@ -92,8 +205,45 @@ function ChatView({ chat, onBack }) {
         text: newMessage
       }));
       
+      // Optimistically add message to UI
+      const optimisticMessage = {
+        _id: `temp-${Date.now()}`,
+        text: newMessage,
+        userId: currentUser?._id,
+        sender: 'You',
+        createdAt: new Date().toISOString()
+      };
+      
+      // Update lastMessage for the chat
+      if (chat && currentUser) {
+        dispatch({
+          type: 'chat/updateLastMessage',
+          payload: {
+            channelId: chat.channelId,
+            lastMessage: newMessage,
+            lastMessageTime: new Date().toISOString()
+          }
+        });
+      }
+      
       setNewMessage('');
     }
+  };
+
+  // Format message for display
+  const formatMessage = (message) => {
+    // Check if message is nested in a 'message' property
+    if (message.message && typeof message.message === 'object') {
+      return message.message;
+    }
+    
+    // Check if text is in 'text' or 'message' property
+    const messageText = message.text || message.message || '';
+    
+    return {
+      ...message,
+      text: messageText
+    };
   };
 
   return (
@@ -118,31 +268,36 @@ function ChatView({ chat, onBack }) {
         ) : (
           <div className="space-y-4">
             {displayMessages && displayMessages.length > 0 ? (
-              displayMessages?.map((message, index) => (
-                <div
-                  key={message._id || `msg-${index}`}
-                  className={`flex ${
-                    message.userId === currentUser?._id || message.sender === 'You' || message.sender === currentUser?._id
-                      ? 'justify-end' 
-                      : 'justify-start'
-                  } mb-2`}
-                >
+              displayMessages.map((rawMessage, index) => {
+                // Format the message
+                const message = formatMessage(rawMessage);
+                
+                return (
                   <div
-                    className={`max-w-64 md:max-w-lg p-2 break-words whitespace-normal rounded-lg ${
+                    key={message._id || `msg-${index}`}
+                    className={`flex ${
                       message.userId === currentUser?._id || message.sender === 'You' || message.sender === currentUser?._id
-                        ? 'bg-blue-500 text-white' 
-                        : 'bg-gray-100'
-                    }`}
+                        ? 'justify-end' 
+                        : 'justify-start'
+                    } mb-2`}
                   >
-                    <p className="break-words whitespace-normal text-base">{message.text || message.message}</p>
-                    <p className="text-xs font-light flex justify-end">
-                      {message.createdAt || message.timestamp
-                        ? new Date(message.createdAt || message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                        : message.time || 'now'}
-                    </p>
+                    <div
+                      className={`max-w-64 md:max-w-lg p-2 break-words whitespace-normal rounded-lg ${
+                        message.userId === currentUser?._id || message.sender === 'You' || message.sender === currentUser?._id
+                          ? 'bg-blue-500 text-white' 
+                          : 'bg-gray-100'
+                      }`}
+                    >
+                      <p className="break-words whitespace-normal text-base">{message.text || message.message}</p>
+                      <p className="text-xs font-light flex justify-end">
+                        {message.createdAt || message.timestamp
+                          ? new Date(message.createdAt || message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                          : message.time || 'now'}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="flex justify-center items-center h-40">
                 <p className="text-muted-foreground">No messages yet</p>
@@ -261,9 +416,9 @@ function CreateGroupDialog({ open, onOpenChange }) {
         // Check if group was created successfully and refresh groups list
         if (result.payload?.data) {
           // Force refresh of groups list
-          // if (currentUser?._id) {
-          //   dispatch(fetchUserGroups(currentUser._id));
-          // }
+          if (currentUser?._id) {
+            dispatch(fetchUserGroups(currentUser._id));
+          }
         }
       });
       setGroupName('');
@@ -300,14 +455,13 @@ function JoinGroupDialog({ open, onOpenChange }) {
   const handleJoinGroup = () => {
     if (groupCode.trim() && currentUser?._id) {
       // Implement your join group logic here
-      // This would typically be a dispatch to your joinPublicGroup action
       dispatch(joinPublicGroup({ 
         userId: currentUser._id, 
         groupCode 
       })).then((result) => {
         if (result.payload?.success) {
           // Refresh groups list after joining
-          // dispatch(fetchUserGroups(currentUser._id));
+          dispatch(fetchUserGroups(currentUser._id));
         }
       });
       setGroupCode('');
@@ -373,15 +527,30 @@ export default function WhatsAppClone() {
       dispatch(fetchChatToken({ userId: currentUser._id }));
       
       // Fetch user chats and groups
-      // dispatch(fetchUserChats(currentUser._id));
-      // dispatch(fetchUserGroups(currentUser._id));
+      dispatch(fetchUserChats(currentUser._id));
+      dispatch(fetchUserGroups(currentUser._id));
       
       console.log("Fetching data for user:", currentUser._id);
     }
+    
+    // Set up polling for chats and groups every 5 seconds
+    const chatInterval = setInterval(() => {
+      if (currentUser && currentUser._id) {
+        dispatch(fetchUserChats(currentUser._id));
+        dispatch(fetchUserGroups(currentUser._id));
+      }
+    }, 5000);
+    
+    return () => clearInterval(chatInterval);
   }, [router, dispatch]);
 
   const handleChatClick = (chat) => {
     setSelectedChat(chat);
+    
+    // Fetch messages for the selected chat
+    if (chat?.channelId) {
+      dispatch(fetchMessages(chat.channelId));
+    }
   };
 
   const handleBackClick = () => {
@@ -425,7 +594,7 @@ export default function WhatsAppClone() {
             setNewChatDialog(false);
             
             // Refresh chats list
-            // dispatch(fetchUserChats(currentUser._id));
+            dispatch(fetchUserChats(currentUser._id));
           }
         });
       }
@@ -436,7 +605,28 @@ export default function WhatsAppClone() {
   const chatsList = Array.isArray(chats) ? chats : [];
   const groupsList = Array.isArray(groups) ? groups : [];
 
-  const filteredChats = chatsList.filter(chat => 
+  // Process chats to ensure they have proper name and avatar
+  const processedChats = chatsList.map(chat => {
+    // If chat doesn't have a name, try to find it from participants
+    let chatName = chat.name;
+    let chatAvatar = chat.avatar || chat.profileImage;
+    
+    if (!chatName && chat.participants && Array.isArray(chat.participants)) {
+      const otherParticipant = chat.participants.find(p => p._id !== currentUser?._id);
+      if (otherParticipant) {
+        chatName = otherParticipant.name;
+        chatAvatar = otherParticipant.profileImage;
+      }
+    }
+    
+    return {
+      ...chat,
+      name: chatName || 'Unknown Chat',
+      avatar: chatAvatar
+    };
+  });
+
+  const filteredChats = processedChats.filter(chat => 
     chat?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
