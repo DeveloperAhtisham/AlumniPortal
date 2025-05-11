@@ -136,7 +136,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const auth = isAuthenticated();
-    if (auth || user.role !== "admin") {
+    if (!auth || user.role !== "admin") {
       console.log("User not authenticated, redirecting to login");
       router.replace("/login");
       return;
@@ -350,7 +350,7 @@ export default function AdminDashboard() {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {registerdColleges?.map((college) => (
+                            {colleges?.map((college) => (
                               <TableRow key={college.id}>
                                 <TableCell className="font-medium">
                                   {college.name}

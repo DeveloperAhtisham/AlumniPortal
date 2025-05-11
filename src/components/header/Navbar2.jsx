@@ -71,6 +71,7 @@ function Navbar2() {
     { name: "Careers", href: "/jobposts", icon: <Search className="h-5 w-5" /> },
     { name: "Memories", href: "/memories", icon: <SmilePlus className="h-5 w-5" /> },
     { name: "Messages", href: "/chat", icon: <Mail className="h-5 w-5" /> },
+    { name: "Donation", href: "/donation", icon: <DollarSignIcon className="h-5 w-5" /> },
   ]
 
   return (
