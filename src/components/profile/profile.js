@@ -20,11 +20,15 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useToast } from "@/hooks/use-toast"
 import { useSelector } from "react-redux"
+import { getUser } from "@/services/checkAuth"
 
 export default function ProfileDisplay(userData, isCurrentUser) {
   const router = useRouter()
   const { toast } = useToast()
   const [activeTab, setActiveTab] = useState("about")
+    const user = getUser();
+    const profilePhoto = user?.profilePhoto;
+    console.log("🚀 ~ ProfileDisplay ~ profilePhoto:", profilePhoto)
   
   const currentUser = useSelector((state) => state.userInfo.userData)
   console.log("🚀 ~ ProfileDisplay ~ currentUser:", currentUser)
@@ -80,7 +84,7 @@ export default function ProfileDisplay(userData, isCurrentUser) {
             <div className="relative bg-gradient-to-r from-[#A51C30] to-[#C24C5E] pt-20 pb-16 px-4 sm:pt-24 sm:pb-32 sm:px-6 lg:px-8">
               <div className="absolute -bottom-12 left-0 w-full flex justify-center sm:justify-start sm:left-6 lg:left-8">
                 <Avatar className="w-[100px] h-[100px] sm:w-32 sm:h-32 border-4 border-white">
-                  <AvatarImage src={currentUser?.profileImage} alt={currentUser?.userId?.name} />
+                  <AvatarImage src={profilePhoto} alt={currentUser?.userId?.name} />
                   <AvatarFallback>{currentUser?.userId?.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
                 </Avatar>
               </div>
