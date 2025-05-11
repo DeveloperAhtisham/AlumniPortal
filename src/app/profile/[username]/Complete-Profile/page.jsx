@@ -1,7 +1,7 @@
 'use client'
+import { registerAlumni } from '@/features/alumni/alumniSlice'
 import { useState } from 'react'
 import { useDispatch } from 'react-redux'
-import { registerAlumni } from '@/redux/features/alumni/alumniSlice'
 
 export default function AlumniRegistration() {
   const dispatch = useDispatch()
