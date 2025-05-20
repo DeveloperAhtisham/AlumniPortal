@@ -61,6 +61,9 @@ import { getAllContactForm } from "@/features/contact/contactSlice";
 import { getAllFeedbacks } from "@/features/feedback/feedbackSlice";
 import { getAlumniList } from "@/features/alumni/alumniSlice";
 import { getStudentList } from "@/features/student/studentSlice";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { getAllEvents, postEvent } from "@/features/event/eventSlice";
 
 export default function AdminDashboard() {
   const { toast } = useToast();
@@ -79,7 +82,9 @@ export default function AdminDashboard() {
   const alumniList = useSelector((state) => state?.alumniList?.alumniList);
   console.log("🚀 ~ AdminDashboard ~ alumniList:", alumniList);
   const studentList = useSelector((state) => state?.studentList?.studentList);
+  const eventList = useSelector((state) => state?.event?.eventList);
   const user = getUser();
+  console.log("🚀 ~ AdminDashboard ~ user:", user)
 
   const colleges = [
     {
@@ -136,12 +141,49 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const auth = isAuthenticated();
-    if (!auth || user.role !== "admin") {
+    if (!auth ) {
       console.log("User not authenticated, redirecting to login");
-      router.replace("/login");
+      router.replace("/admin/login");
       return;
     }
   }, [router]);
+
+  const [formData, setFormData] = useState({
+    eventPhoto: null,
+    title: "",
+    date: "",
+    description: "",
+  });
+
+  const handleChange = (e) => {
+    const { name, value, files } = e.target;
+    if (name === "eventPhoto") {
+      setFormData({ ...formData, eventPhoto: files[0] });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const eventForm = new FormData();
+    eventForm.append("eventPhoto", formData.eventPhoto);
+    eventForm.append("title", formData.title);
+    eventForm.append("date", formData.date);
+    eventForm.append("description", formData.description);
+
+    dispatch(postEvent(eventForm));
+    setFormData({
+      eventPhoto: null,
+      title: "",
+      date: "",
+      description: "",
+    });
+  };
+
+  useEffect(() => {
+    dispatch(getAllEvents());
+  }, [dispatch]);
 
   useEffect(() => {
     dispatch(getAllContactForm());
@@ -327,6 +369,8 @@ export default function AdminDashboard() {
                     <TabsTrigger value="alumni">Alumni List</TabsTrigger>
                     <TabsTrigger value="feedback">User Feedback</TabsTrigger>
                     <TabsTrigger value="inqueries">User inquiries</TabsTrigger>
+                    <TabsTrigger value="postEvent">Post New Event</TabsTrigger>
+                    <TabsTrigger value="allEvents">All Events</TabsTrigger>
                   </TabsList>
                   <TabsContent value="colleges">
                     <Card>
@@ -555,6 +599,65 @@ export default function AdminDashboard() {
                       </CardContent>
                     </Card>
                   </TabsContent>
+
+                  <TabsContent value="postEvent">
+      <Card>
+        <CardHeader>
+          <CardTitle>Post New Event</CardTitle>
+          <CardDescription>Submit an event to share with alumni.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4 mb-6">
+            <Input type="file" name="eventPhoto" accept="image/*" onChange={handleChange} required />
+            <Input type="text" name="title" placeholder="Event Title" value={formData.title} onChange={handleChange} required />
+            <Input type="date" name="date" value={formData.date} onChange={handleChange} required />
+            <Textarea name="description" placeholder="Event Description" value={formData.description} onChange={handleChange} required />
+            <Button type="submit">Post Event</Button>
+          </form>
+        </CardContent>
+      </Card>
+    </TabsContent>
+
+    <TabsContent value="allEvents">
+  <Card>
+    <CardHeader>
+      <CardTitle>All Events</CardTitle>
+      <CardDescription>List of all submitted events</CardDescription>
+    </CardHeader>
+    <CardContent>
+      <ScrollArea className="h-[400px]">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Title</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead>Photo</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {eventList?.map((event) => (
+              <TableRow key={event._id}>
+                <TableCell className="font-medium">{event?.title}</TableCell>
+                <TableCell>{new Date(event?.date).toLocaleDateString()}</TableCell>
+                <TableCell className="max-w-[300px] truncate">{event?.description}</TableCell>
+                <TableCell>
+                  <img
+                    src={event?.eventPhoto?.url || "/placeholder.jpg"}
+                    alt="Event"
+                    className="w-20 h-14 object-cover rounded"
+                  />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </ScrollArea>
+    </CardContent>
+  </Card>
+</TabsContent>
+
+
                 </Tabs>
               </main>
             </div>

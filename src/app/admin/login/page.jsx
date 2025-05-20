@@ -19,8 +19,8 @@ function Page() {
 
   const [error, setError] = useState("");
   const [inputs, setInputs] = useState({
-    email: "umer@gmail.com",
-    password: "3456789",
+    email: "admin@gmail.com",
+    password: "admin",
   });
 
   const [isLoading, setLoading] = useState(false);
@@ -56,7 +56,8 @@ function Page() {
     // ✅ Save to localStorage instead of Redux
     localStorage.setItem("user", JSON.stringify(user));
     localStorage.setItem("token", loginData?.data?.token || "");
-        router.push("/home")
+    router.push("/admin/dashboard");
+        
       } else {
         setError("Invalid credentials");
       }
@@ -76,9 +77,9 @@ function Page() {
     <div>
       <NavForSlash />
       <div className="flex justify-center min-h-screen bg-white">
-        <div className="w-full max-w-md mt-32 p-8 space-y-8 bg-white rounded-xl">
+        <div className="w-full max-w-md mt-32 p-8 space-y-6 bg-white rounded-xl">
           <h2 className="text-center text-2xl font-bold text-black">
-            Login to your account
+            Admin Login
           </h2>
           <p className="mt-2 text-center text-sm text-blue-600">
             Do not have an account?{" "}
