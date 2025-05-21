@@ -171,7 +171,7 @@ A walk down memory lane awaits as we honour their incredible journey and achieve
                 class={alum?.batch}
                 position={alum?.jobTitle}
                 company={alum?.companyName}
-                image={alum?.image || "/image/profileLogo.png"} // fallback image
+                image={alum?.profilePhoto || "/image/profileLogo.png"} // fallback image
                 _id={alum?.id?._id}
               />
             ))}

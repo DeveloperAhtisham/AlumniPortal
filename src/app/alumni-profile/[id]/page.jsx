@@ -88,7 +88,7 @@ export default function ProfileDisplay(userData, isuserAlumni) {
             <div className="relative bg-gradient-to-r from-[#A51C30] to-[#C24C5E] pt-20 pb-16 px-4 sm:pt-24 sm:pb-32 sm:px-6 lg:px-8">
               <div className="absolute -bottom-12 left-0 w-full flex justify-center sm:justify-start sm:left-6 lg:left-8">
                 <Avatar className="w-[100px] h-[100px] sm:w-32 sm:h-32 border-4 border-white">
-                  <AvatarImage src={userAlumni?.profileImage} alt={userAlumni?.userId?.name} />
+                  <AvatarImage src={userAlumni?.userId?.profilePhoto} alt={userAlumni?.userId?.name} />
                   <AvatarFallback>{userAlumni?.userId?.name.split(" ").map(n => n[0]).join("")}</AvatarFallback>
                 </Avatar>
               </div>

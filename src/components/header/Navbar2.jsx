@@ -26,7 +26,6 @@ function Navbar2() {
   const pathname = usePathname()
   const user = getUser();
   const userID = user?._id;
-  const profilePhoto = user?.profilePhoto;
   
   const logoutUser = () => {
     if (typeof window !== "undefined") {
@@ -37,6 +36,7 @@ function Navbar2() {
   };
 
   const userData = useSelector((state) => state?.userInfo?.userData)
+  const profilePhoto = userData?.userId?.profilePhoto;
 
   useEffect(() => {
     const fetchUserInfo = async () => {
