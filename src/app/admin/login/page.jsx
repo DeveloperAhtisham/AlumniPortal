@@ -9,7 +9,7 @@ import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import NavForSlash from "@/components/header/NavForSlash";
 import { useDispatch } from "react-redux";
-import { handleLoginApi, setUser } from "@/features/auth/authSlice";
+import { AlumniLoginApi, handleLoginApi, setUser } from "@/features/auth/authSlice";
 import { getAlumniInfo, getStudentInfo } from "@/features/auth/userInfoSlice";
 
 function Page() {
@@ -19,8 +19,8 @@ function Page() {
 
   const [error, setError] = useState("");
   const [inputs, setInputs] = useState({
-    email: "admin@gmail.com",
-    password: "admin",
+    email: "admin@example.com",
+    password: "admin123",
   });
 
   const [isLoading, setLoading] = useState(false);
@@ -40,22 +40,22 @@ function Page() {
     }
 
     try {
-      const res = await dispatch(handleLoginApi(inputs));
+      const res = await dispatch(AlumniLoginApi(inputs));
 
       // SAFELY destructure payload
       const loginData = res?.payload;
-      console.log("🚀 ~ handleLogin ~ loginData:", loginData)
-      const user = loginData?.data?.User;
-      const userID = loginData?.data?.User?._id;
-      const status = loginData?.status;
+      console.log("🚀 ~ handleLogin ~ loginData:", loginData?.data?.token)
+      // const user = loginData?.data?.User;
+      // const userID = loginData?.data?.User?._id;
+      // const status = loginData?.status;
 
-      console.log("🚀 ~ User Role:", user);
-      console.log("🚀 ~ User ID:", userID);
+      // console.log("🚀 ~ User Role:", user);
+      // console.log("🚀 ~ User ID:", userID);
 
-      if (status === 200 && user) {
+      if (res?.payload?.status === 200 ) {
     // ✅ Save to localStorage instead of Redux
-    localStorage.setItem("user", JSON.stringify(user));
-    localStorage.setItem("token", loginData?.data?.token || "");
+    // localStorage.setItem("user", JSON.stringify(user));
+    // localStorage.setItem("token", loginData?.data?.token || "");
     router.push("/admin/dashboard");
         
       } else {

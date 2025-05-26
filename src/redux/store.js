@@ -10,6 +10,7 @@ import chatSlice from "../features/chat/chatSlice"
 import feedbackSlice from "../features/feedback/feedbackSlice"
 import contactSlice from "../features/contact/contactSlice"
 import innovationSlice from "../features/innovation/innovationSlice"
+import eventSlice from "../features/event/eventSlice"
 
 // Combine all slices into a single rootReducer
 const rootReducer = combineReducers({
@@ -23,6 +24,7 @@ const rootReducer = combineReducers({
   feedback: feedbackSlice,
   contact: contactSlice,
   innovation: innovationSlice,
+  event: eventSlice,
 
 });
 

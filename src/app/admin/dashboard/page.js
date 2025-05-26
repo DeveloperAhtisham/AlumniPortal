@@ -83,6 +83,7 @@ export default function AdminDashboard() {
   console.log("🚀 ~ AdminDashboard ~ alumniList:", alumniList);
   const studentList = useSelector((state) => state?.studentList?.studentList);
   const eventList = useSelector((state) => state?.event?.eventList);
+  console.log("🚀 ~ AdminDashboard ~ eventList:", eventList)
   const user = getUser();
   console.log("🚀 ~ AdminDashboard ~ user:", user)
 
@@ -149,7 +150,7 @@ export default function AdminDashboard() {
   }, [router]);
 
   const [formData, setFormData] = useState({
-    eventPhoto: null,
+    thumbnail: null,
     title: "",
     date: "",
     description: "",
@@ -157,8 +158,8 @@ export default function AdminDashboard() {
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-    if (name === "eventPhoto") {
-      setFormData({ ...formData, eventPhoto: files[0] });
+    if (name === "thumbnail") {
+      setFormData({ ...formData, thumbnail: files[0] });
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -167,16 +168,23 @@ export default function AdminDashboard() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const eventForm = new FormData();
-    eventForm.append("eventPhoto", formData.eventPhoto);
+    eventForm.append("thumbnail", formData.thumbnail);
     eventForm.append("title", formData.title);
+    eventForm.append("day", formData.day);
     eventForm.append("date", formData.date);
     eventForm.append("description", formData.description);
 
     dispatch(postEvent(eventForm));
+    toast({
+      variant: "green",
+      title: "Event Posted Successfully",
+      duration: 1700
+    });
     setFormData({
-      eventPhoto: null,
+      thumbnail: null,
       title: "",
       date: "",
+      day: "",
       description: "",
     });
   };
@@ -608,9 +616,10 @@ export default function AdminDashboard() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4 mb-6">
-            <Input type="file" name="eventPhoto" accept="image/*" onChange={handleChange} required />
+            <Input type="file" name="thumbnail" accept="image/*" onChange={handleChange} required />
             <Input type="text" name="title" placeholder="Event Title" value={formData.title} onChange={handleChange} required />
             <Input type="date" name="date" value={formData.date} onChange={handleChange} required />
+            <Input type="text" name="day" value={formData.day} onChange={handleChange} required />
             <Textarea name="description" placeholder="Event Description" value={formData.description} onChange={handleChange} required />
             <Button type="submit">Post Event</Button>
           </form>
@@ -631,6 +640,7 @@ export default function AdminDashboard() {
             <TableRow>
               <TableHead>Title</TableHead>
               <TableHead>Date</TableHead>
+              <TableHead>Day</TableHead>
               <TableHead>Description</TableHead>
               <TableHead>Photo</TableHead>
             </TableRow>
@@ -640,10 +650,11 @@ export default function AdminDashboard() {
               <TableRow key={event._id}>
                 <TableCell className="font-medium">{event?.title}</TableCell>
                 <TableCell>{new Date(event?.date).toLocaleDateString()}</TableCell>
+                <TableCell>{event?.day}</TableCell>
                 <TableCell className="max-w-[300px] truncate">{event?.description}</TableCell>
                 <TableCell>
                   <img
-                    src={event?.eventPhoto?.url || "/placeholder.jpg"}
+                    src={event?.thumbnail?.url || "/placeholder.jpg"}
                     alt="Event"
                     className="w-20 h-14 object-cover rounded"
                   />

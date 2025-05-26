@@ -13,7 +13,7 @@ export const postEvent = createAsyncThunkWrapper(
   "event/post",
   async (payload) => {
     console.log("🚀 API Hit Started: event/post");
-    const response = await client.post("/memories/create", payload, {
+    const response = await client.post("/events/event", payload, {
         "Content-Type": "multipart/form-data",
       });
     console.log("🚀 ~ Memory Post Response:", response);
@@ -25,7 +25,7 @@ export const postEvent = createAsyncThunkWrapper(
 export const getAllEvents = createAsyncThunkWrapper(
   "event/eventList",
   async () => {
-    const response = await client.get(`/memories/all`);
+    const response = await client.get(`/events/all`);
     console.log("🚀 ~ memoryList ~ response:", response);
 
     const { data, status } = response || {};

@@ -34,6 +34,22 @@ export const handleLoginApi = createAsyncThunkWrapper(
 
 );
 
+export const AlumniLoginApi = createAsyncThunkWrapper(
+  "admin/login",
+  async (payload,dispatch) => {
+    const response = await client.post("/admin/login", { ...payload });
+    console.log("🚀 ~ responssasasse:", response);
+    const { data, status } = response || {};
+
+    if (data?.token) {
+      await setAccessAndRefreshToken(data.token);
+    }    
+    return { data, status };
+
+  }
+
+);
+
 
 
 export const handleCheckApi = createAsyncThunkWrapper(
