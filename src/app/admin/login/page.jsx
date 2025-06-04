@@ -1,16 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import jwt from "jsonwebtoken";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { useToast } from "@/hooks/use-toast";
-import NavForSlash from "@/components/header/NavForSlash";
+import { AlumniLoginApi } from "@/features/auth/authSlice";
 import { useDispatch } from "react-redux";
-import { AlumniLoginApi, handleLoginApi, setUser } from "@/features/auth/authSlice";
-import { getAlumniInfo, getStudentInfo } from "@/features/auth/userInfoSlice";
+import NavForSlash from "@/components/header/NavForSlash";
+import { useToast } from "@/hooks/use-toast";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 function Page() {
   const { toast } = useToast();
