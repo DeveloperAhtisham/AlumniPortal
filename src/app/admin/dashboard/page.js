@@ -653,7 +653,7 @@ export default function AdminDashboard() {
                 <TableCell>{event?.day}</TableCell>
                 <TableCell className="max-w-[300px] truncate">{event?.description}</TableCell>
                 <TableCell>
-                  <img
+                  <image
                     src={event?.thumbnail?.url || "/placeholder.jpg"}
                     alt="Event"
                     className="w-20 h-14 object-cover rounded"

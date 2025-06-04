@@ -137,7 +137,7 @@ export default function ContactPageOne() {
                       onChange={(e) => setThumbnail(e.target.files[0])}
                     />
                     {thumbnail && (
-                      <img
+                      <image
                         src={URL.createObjectURL(thumbnail)}
                         alt="Preview"
                         style={{ width: "30px" }}

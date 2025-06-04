@@ -195,7 +195,7 @@ export default function JobPostDetail() {
               </div>
 
               {job.thumbnail && (
-                <img
+                <image
                   src={job.thumbnail}
                   alt={`${job.company} banner`}
                   className="w-full h-64 object-cover rounded-lg mb-6"

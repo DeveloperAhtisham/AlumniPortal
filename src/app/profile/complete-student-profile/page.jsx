@@ -307,7 +307,7 @@ export default function CreateProfilePage () {
                     </div>
                     {previewUrl && (
                       <div className="flex justify-center">
-                        <img src={previewUrl} alt="Preview" className="max-h-40 rounded" />
+                        <image src={previewUrl} alt="Preview" className="max-h-40 rounded" />
                       </div>
                     )}
                   </div>

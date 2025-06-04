@@ -233,7 +233,7 @@ export default function SearchJob() {
                     {/* Fix job data references */}
                     {job?.thumbnail && (
                       <div className="lg:w-1/3">
-                        <img
+                        <image
                           src={job?.thumbnail || './image/event1.jpeg'}
                           alt={`${job?.companyName || 'Company'} banner`}
                           className="w-full h-48 lg:h-full object-cover"

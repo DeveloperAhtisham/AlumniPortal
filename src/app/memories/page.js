@@ -209,7 +209,7 @@ const filteredMemories = memoriesList
       </Button>
 
       {previewUrl && (
-        <img
+        <image
           src={previewUrl}
           alt="Preview"
           className="w-16 h-16 rounded object-cover"
@@ -275,7 +275,7 @@ const filteredMemories = memoriesList
                 </Link>
 
                 {memory?.pic && (
-                  <img
+                  <image
                     src={memory?.pic || ''}
                     alt="Memory"
                     className="w-full h-64 object-contain rounded-lg mb-4"

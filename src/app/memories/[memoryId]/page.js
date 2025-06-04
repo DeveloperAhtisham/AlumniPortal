@@ -109,7 +109,7 @@ export default function Page() {
                             </div>
                         </div>
                         {memory?.image && (
-                            <img
+                            <image
                                 src={memory?.image}
                                 alt="Memory"
                                 className="w-full h-64 object-cover rounded-lg mb-4"

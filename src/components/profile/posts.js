@@ -137,7 +137,7 @@ export default function PostsAndMemoriesTabs() {
                   <div key={index} className="rounded-lg border overflow-hidden shadow-md">
                     {post.thumbnail && (
                       <div className="w-full h-48 sm:h-64">
-                        <img
+                        <image
                           src={post.thumbnail}
                           alt="Post thumbnail"
                           className="w-full h-full object-cover"
@@ -193,7 +193,7 @@ export default function PostsAndMemoriesTabs() {
                   <div key={memory._id} className="rounded-lg border overflow-hidden shadow-md flex flex-col sm:flex-row">
                     {memory.image && (
                       <div className="w-full sm:w-1/3 h-48 sm:h-auto">
-                        <img
+                        <image
                           src={memory.image}
                           alt="Memory image"
                           className="w-full h-full object-cover"

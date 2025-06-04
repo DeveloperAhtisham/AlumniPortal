@@ -650,7 +650,7 @@ export default function CollegeDashboard() {
                               </CardHeader>
                               <CardContent>
                                 <div className="aspect-video relative overflow-hidden rounded-md">
-                                  <img
+                                  <image
                                     src={event?.image}
                                     alt={event?.name}
                                     className="object-cover w-full h-full"
@@ -764,7 +764,7 @@ export default function CollegeDashboard() {
                         <CardContent>
                           <p className="mb-2">{alumni.achievement}</p>
                           <div className="aspect-video relative overflow-hidden rounded-md">
-                            <img
+                            <image
                               src={alumni.image}
                               alt={alumni.name}
                               className="object-cover w-full h-full"
@@ -838,7 +838,7 @@ export default function CollegeDashboard() {
               {/* <Input onChange={(e) => setImage(e.target.value)} id="event-image" type="file" accept="image/*" className="col-span-3" /> */}
               <div className='flex '>
                 <input type="file" accept="image/*" onChange={handleImageChange} />
-                {previewUrl && <img src={previewUrl} alt="Preview" style={{ width: "30px" }} />}
+                {previewUrl && <image src={previewUrl} alt="Preview" style={{ width: "30px" }} />}
               </div>
             </div>
           </div>
